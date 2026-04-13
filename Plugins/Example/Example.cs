@@ -31,6 +31,6 @@ public class Example(IPage _page, IConfiguration config) : Manufacturer(_page, c
         //put here code that can locate image's src on the product's page
         return [];
         // you can yous this if they can be find by a locator
-        return SimpleLocateImages("DIV.example#locator example");
+        return await SimpleLocateImages("DIV.example#locator example");
     }
 }
