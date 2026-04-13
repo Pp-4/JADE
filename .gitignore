@@ -1,3 +1,22 @@
-obj
-bin
+#exclude artifacts
+[Oo]bj/
+[Bb]in/
+.nuget/
+
+#exclude browser user data
 playwright-user-data
+
+#exclude temporary files
+src/GetProductData
+src/js
+
+#exclude all plugins except the example one
+Plugins
+!Plugins/Example
+
+#exclude ide config
+.vscode
+
+#exclude user data
+JadeConfig.json
+data
