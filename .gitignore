@@ -9,6 +9,7 @@ playwright-user-data
 #exclude temporary files
 src/GetProductData
 src/js
+.sln
 
 #exclude all plugins except the example one
 Plugins
@@ -20,3 +21,4 @@ Plugins
 #exclude user data
 JadeConfig.json
 data
+img
