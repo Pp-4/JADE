@@ -17,7 +17,7 @@ public class Example(IPage _page, IConfiguration config) : Manufacturer(_page, c
     //name of the js script that grabs product's attributes
     protected override string JsSnippet => "Example.js";
     //put here list of names by which the assembly will be recognized
-    public override string[] Names => ["TEST"];
+    public override string[] Names => ["EXAMPLE"];
     //256kb default
     protected override int MaxImgSize => base.MaxImgSize;
     protected override async Task LocateProduct(Product product)

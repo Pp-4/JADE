@@ -152,7 +152,7 @@ public partial class Program
                 Manufacturer temp = manufac as Manufacturer;
                 foreach (var name in temp.Names)
                 {
-                    if (name != string.Empty)
+                    if (name != string.Empty && name != "EXAMPLE")
                     {
                         manufacturers.Add(name, temp);
                         Console.WriteLine($"Manufacturer {name} assembly loaded");
