@@ -14,12 +14,12 @@ Files needed to get started:
 
 How to use your own plugin:
 --
-**using compiled dll**
+#### Using compiled dll
 1. Grab JADE.dll from the main program
 2. Either put it in the plugin project, or change HintPath in .csproj to point to it.
 3. Compile plugin
 4. put .dll file into the plugins directory of the main program
-**using source code**
+#### Using source code
 1. Dowload JADE source code
 2. Put your plugin's source code into Plugins directory
 3. Compile main project
