@@ -8,7 +8,8 @@
   <ItemGroup>
     <Reference Include="JADE">
       <!-- put here relative/absolute location of the JADE.dll, the plugin is compiled against it -->
-      <HintPath>JADE.dll</HintPath>
+      <HintPath>../../src/bin/Debug/net10.0/JADE.dll</HintPath>
+      <!-- <HintPath>JADE.dll</HintPath> -->
       <Private>false</Private>
     </Reference>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.3" />
