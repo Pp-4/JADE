@@ -10,4 +10,17 @@ Files needed to get started:
 2. path where the images will be stored (imgDir)
 3. http backed address (backend)
 4. links to various manufacturers (manufac name : manufac link).
-5) (addImagesTimeoutMiliseconds) optional field for a custom time limit for image upload, minimum time hardcoded at 1 sec.
+5. (addImagesTimeoutMiliseconds) optional field for a custom time limit for image upload, minimum time hardcoded at 1 sec.
+
+How to use your own plugin:
+--
+**using compiled dll**
+1. Grab JADE.dll from the main program
+2. Either put it in the plugin project, or change HintPath in .csproj to point to it.
+3. Compile plugin
+4. put .dll file into the plugins directory of the main program
+**using source code**
+1. Dowload JADE source code
+2. Put your plugin's source code into Plugins directory
+3. Compile main project
+4. All compiled plugin's dlls will be moved to plugins directory of compiled main program
