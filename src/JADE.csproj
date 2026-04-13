@@ -29,7 +29,7 @@
   <Target Name="BuildAndCopyPlugins" AfterTargets="Build">
     <Message Text="Building plugins..." Importance="high" />
     <MSBuild Projects="@(PluginProjects)" 
-             Targets="Build" 
+             Targets="Restore;Build" 
              Properties="Configuration=$(Configuration);Platform=$(Platform)" />
     
     <Message Text="Collecting plugin DLLs from: ../Plugins/*/bin/$(Configuration)/net10.0/" Importance="high" />
