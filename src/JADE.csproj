@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- replace with your secret id -->
+    <UserSecretsId>702352e0-4f85-4d4b-90c8-0b12af1d740c</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Analysis" Version="0.23.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.58.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="../JadeConfig.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="js/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PluginProjects Include="../Plugins/*/*.csproj" />
+  </ItemGroup>
+  <!-- Compile main code, then compile plugins against JADE.dll and copy their dlls to Plugin directory  -->
+  <Target Name="BuildAndCopyPlugins" AfterTargets="Build">
+    <Message Text="Building plugins..." Importance="high" />
+    <MSBuild Projects="@(PluginProjects)" 
+             Targets="Build" 
+             Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+    
+    <Message Text="Collecting plugin DLLs from: ../Plugins/*/bin/$(Configuration)/net10.0/" Importance="high" />
+    <ItemGroup>
+      <PluginDlls Include="../Plugins/*/bin/$(Configuration)/net10.0/*.dll" 
+                   Exclude="../Plugins/*/bin/$(Configuration)/net10.0/JADE.dll" />
+    </ItemGroup>
+    
+    <Message Text="Found @(PluginDlls->Count()) plugin DLLs" Importance="high" />
+    <MakeDir Directories="$(OutputPath)plugins" />
+    <Copy SourceFiles="@(PluginDlls)" 
+          DestinationFolder="$(OutputPath)plugins"
+          SkipUnchangedFiles="false" />
+
+    <Message Text="Copied plugins to: $(OutputPath)plugins" Importance="high" />
+  </Target>
+
+</Project>
