@@ -1,8 +1,0 @@
-{
-    "addImagesTimeoutMiliseconds" : "15000",
-    "backend": "exampleBackend",
-    "imgDir": "/example/img/",
-    "data" : "/example/data/",
-    "prodPath": "products.txt",
-    "prodData": "data.json"
-}
