@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Solution>
+    <Folder Name="/src/">
+        <Project Path="src/JADE.csproj" />
+    </Folder>
+    <Folder Name="/Plugins/">
+        <Project Path="Plugins/Bemko/Bemko.csproj" />
+        <Project Path="Plugins/Example/Example.csproj" />
+        <Project Path="Plugins/Ideus/Ideus.csproj" />
+        <Project Path="Plugins/Kanlux/Kanlux.csproj" />
+        <Project Path="Plugins/KontaktSimon/KontaktSimon.csproj" />
+        <Project Path="Plugins/LedLine/LedLine.csproj" />
+        <Project Path="Plugins/Ledpol/Ledpol.csproj" />
+        <Project Path="Plugins/Ledvance/Ledvance.csproj" />
+        <Project Path="Plugins/NexTec/NexTec.csproj" />
+        <Project Path="Plugins/Norak/Norak.csproj" />
+        <Project Path="Plugins/Orno/Orno.csproj" />
+        <Project Path="Plugins/SpectrumLed/SpectrumLed.csproj" />
+        <Project Path="Plugins/Topex/Topex.csproj" />
+        <Project Path="Plugins/VTac/VTac.csproj" />
+    </Folder>
+</Solution>
