@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Reflection;
 using System.Text.Json;
 using System.Linq;
 using System.IO;
@@ -10,7 +11,6 @@ using Microsoft.Playwright;
 
 using JADE.models;
 using JADE.Backend;
-using System.Reflection;
 
 namespace JADE;
 
@@ -25,7 +25,7 @@ public partial class Program
         {
             config = new ConfigurationBuilder()
                 .AddJsonFile(configFileName, optional: false)
-                .AddInMemoryCollection(new Dictionary<string, string>
+                .AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     {"browserDir","playwright-user-data"},
                     {"imageLImit", "3"}
@@ -42,7 +42,7 @@ public partial class Program
         using IPlaywright playwright = await Playwright.CreateAsync();
 
         await using IBrowserContext context = await playwright.Chromium.LaunchPersistentContextAsync
-        (config["browserDir"],
+        (config["browserDir"] ?? throw new KeyNotFoundException(""),
         new()
         {
             Channel = "chromium",
@@ -64,7 +64,7 @@ public partial class Program
         var page = context.Pages.FirstOrDefault() ?? await context.NewPageAsync();
         await page.GotoAsync("about:blank");
         BackendNavigation navigate = new(page, config);
-        string filePath = Path.Combine(config["data"], config["prodData"]);
+        string filePath = Path.Combine(config["data"] ?? "", config["prodData"] ?? "");
 
         var manufacturers = LoadManufacturers(page, config);
 
@@ -107,14 +107,12 @@ public partial class Program
     public static Dictionary<string, Manufacturer> LoadManufacturers(IPage page, IConfiguration config)
     {
         Console.WriteLine("Loading manufacturer assemblies");
-        //get type of the base class
-        var baseType = typeof(Manufacturer);
+
+        Dictionary<string, Manufacturer> manufacturers = [];
+        Type baseType = typeof(Manufacturer);
+        Assembly? assembly = Assembly.GetAssembly(baseType) ?? throw new DllNotFoundException();
 
         //load internal manufacturer assemblies
-        //get the assembly of the base class
-        var assembly = Assembly.GetAssembly(baseType);
-        //get list of types from which baseclass can be assigned
-        //ie get all derived classes
         var derivedTypes = assembly
         .GetTypes()
         .Where(t => t != baseType && baseType.IsAssignableFrom(t))
@@ -141,26 +139,21 @@ public partial class Program
                 }
             }
         }
-
-
-        Dictionary<string, Manufacturer> manufacturers = [];
         foreach (var type in derivedTypes)
         {
             var manufac = Activator.CreateInstance(type, [page, config]);
             if (manufac is Manufacturer)
             {
-                Manufacturer temp = manufac as Manufacturer;
-                foreach (var name in temp.Names)
+                var prod = manufac as Manufacturer;
+                var names = prod!.Names.Where(x => x != string.Empty && x != "EXAMPLE") ?? [];
+
+                foreach (var name in names)
                 {
-                    if (name != string.Empty && name != "EXAMPLE")
-                    {
-                        manufacturers.Add(name, temp);
-                        Console.WriteLine($"Manufacturer {name} assembly loaded");
-                    }
+                    manufacturers.Add(name, prod!);
+                    Console.WriteLine($"Manufacturer {name} assembly loaded");
                 }
             }
         }
-
         return manufacturers;
     }
 }

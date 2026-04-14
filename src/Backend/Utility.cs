@@ -13,31 +13,47 @@ public partial class BackendNavigation
     public async Task SaveProductsToFile(List<Product> products)
     {
         Console.WriteLine($"Saving product data to {dataStorageLocation}");
-        string filePath = Path.Combine(config["data"], dataStorageLocation);
-        string content = JsonSerializer.Serialize(products);
-        await File.WriteAllTextAsync(filePath, content);
+        string? dataPath = config["data"];
+        if (dataPath is not null)
+        {
+            string filePath = Path.Combine(dataPath, dataStorageLocation);
+            string content = JsonSerializer.Serialize(products);
+            await File.WriteAllTextAsync(filePath, content);
+            Console.WriteLine("Product data saved.");
+        }
+        else
+            Console.WriteLine("Invalid or missing data directory path in config file!");
     }
     public async Task<List<Product>> LoadProductsFromFile()
     {
         List<Product> products = [];
-
-        string filePath = Path.Combine(config["data"], dataStorageLocation);
-        if (File.Exists(filePath))
+        string? dataPath = config["data"];
+        if (dataPath is not null)
         {
-            Console.WriteLine($"Loading product data from {dataStorageLocation}");
-            string jsonContent = File.ReadAllText(filePath);
-            if (jsonContent.Length == 0)
-                return products;
-            try
+            string filePath = Path.Combine(dataPath, dataStorageLocation);
+            if (File.Exists(filePath))
             {
-                products.AddRange(JsonSerializer.Deserialize<IEnumerable<Product>>(jsonContent));
-            }
-            catch (JsonException e)
-            {
-                Console.WriteLine($"Error when loading local product data: {e.Message}, skipping");
-                return products;
+                Console.WriteLine($"Loading product data from {dataStorageLocation}");
+                string jsonContent = File.ReadAllText(filePath);
+                if (jsonContent.Length == 0)
+                    return products;
+                try
+                {
+                    var des = JsonSerializer.Deserialize<IEnumerable<Product>>(jsonContent);
+                    if (des is not null)
+                        products.AddRange(des);
+                    else
+                        Console.WriteLine($"No products loaded, skipping");
+                }
+                catch (JsonException e)
+                {
+                    Console.WriteLine($"Error when loading local product data: {e.Message}, skipping");
+                    return products;
+                }
             }
         }
+        else
+            Console.WriteLine("Invalid or missing data directory path in config file!");
         return products;
     }
     /// <summary>

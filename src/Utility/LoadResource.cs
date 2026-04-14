@@ -12,8 +12,11 @@ public partial class Program
         //list all resources in current assembly
         //Assembly.GetExecutingAssembly().GetManifestResourceNames();
         using var stream = assembly.GetManifestResourceStream(name);
-        using var reader = new StreamReader(stream);
-
-        return reader.ReadToEnd();
+        if (stream is not null)
+        {
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        else throw new FileNotFoundException($"{name} resource not found!");
     }
 }

@@ -24,6 +24,7 @@ public partial class BackendNavigation(IPage _page, IConfiguration _config)
     readonly IConfiguration config = _config;
     readonly string dataStorageLocation = _config["prodData"] ?? "data.json";
 
+
     //set the default type of search id
     SearchBy searchIdType = SearchBy.TRADEID;
 
@@ -34,9 +35,17 @@ public partial class BackendNavigation(IPage _page, IConfiguration _config)
     internal async Task<List<Product>> GetProducts(List<Product> products)
     {
         DataFrame productIds;
+        string? backend = config["backend"];
+        string? dataDir = config["data"];
+        string? prodFile = config["prodPath"];
+        if (backend is null || dataDir is null || prodFile is null)
+        {
+            Console.WriteLine("Missing config when fetching product list!");
+            return products;
+        }
         try
         {
-            string path = Path.Combine(config["data"], config["prodPath"]);
+            string path = Path.Combine(dataDir, prodFile);
             Console.WriteLine($"Loading product list from {path}");
             if (Path.GetExtension(path) == ".csv")
                 productIds = DataFrame.LoadCsv(path, ',', true, dataTypes: [typeof(string)]);
@@ -46,16 +55,15 @@ public partial class BackendNavigation(IPage _page, IConfiguration _config)
         {
             throw new Exception($"Error when opening product list: {e.Message}");
         }
-
-        if (!page.Url.StartsWith(config["backend"]))
+        if (!page.Url.StartsWith(backend))
             await LogIn();
         foreach (DataFrameRow row in productIds.Rows)
         {
             //might be tradeId, might be productId
-            string someId = row[0].ToString();
+            string? someId = row[0].ToString();
 
-            //don't add if there is already a copy of it
-            if (!products.Any(x => x.SomeId == someId))
+            //don't add if there is already a copy of it, skip #comments
+            if (someId is not null && !someId.Contains('#') && !products.Any(x => x.SomeId == someId))
             {
                 Product product = await GetBaseInfo(someId);
                 products.Add(product);
