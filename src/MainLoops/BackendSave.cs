@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 
-using PlaywrightSharp.models;
-using PlaywrightSharp.Backend;
+using JADE.models;
+using JADE.Backend;
 
-namespace PlaywrightSharp;
+namespace JADE;
 
 public partial class Program
 {

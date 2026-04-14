@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Playwright;
 
-using PlaywrightSharp.models;
+using JADE.models;
 
 namespace Plugin.Example;
 

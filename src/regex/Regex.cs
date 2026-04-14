@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace PlaywrightSharp.RegularEx;
+namespace JADE.RegularEx;
 
 public static partial class RegExpressions
 {

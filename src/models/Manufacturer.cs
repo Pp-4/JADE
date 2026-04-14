@@ -9,7 +9,7 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Playwright;
 
-namespace PlaywrightSharp.models;
+namespace JADE.models;
 
 public abstract class Manufacturer(IPage _page, IConfiguration _config)
 {

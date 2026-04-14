@@ -3,7 +3,7 @@ using System;
 
 using Microsoft.Playwright;
 
-namespace PlaywrightSharp.Backend;
+namespace JADE.Backend;
 
 public partial class BackendNavigation
 {

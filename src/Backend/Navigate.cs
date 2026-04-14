@@ -8,10 +8,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Data.Analysis;
 using Microsoft.Playwright;
 
-using PlaywrightSharp.models;
+using JADE.models;
 
 
-namespace PlaywrightSharp.Backend;
+namespace JADE.Backend;
 
 /// <summary>
 /// This class is used to navigate wapro service

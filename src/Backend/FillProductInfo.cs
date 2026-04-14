@@ -3,12 +3,12 @@ using System;
 
 using Microsoft.Playwright;
 
-using PlaywrightSharp.models;
+using JADE.models;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace PlaywrightSharp.Backend;
+namespace JADE.Backend;
 
 public partial class BackendNavigation //: PageTest
 {

@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 using System.Linq;
 using System;
 
-using PlaywrightSharp.models;
-using PlaywrightSharp.Backend;
+using JADE.models;
+using JADE.Backend;
 
-namespace PlaywrightSharp;
+namespace JADE;
 
 public partial class Program
 {
