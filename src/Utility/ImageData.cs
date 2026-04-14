@@ -1,4 +1,4 @@
-namespace PlaywrightSharp.Utility;
+namespace JADE.Utility;
 
 public static class ImageData
 {

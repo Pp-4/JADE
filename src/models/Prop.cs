@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PlaywrightSharp.models;
+namespace JADE.models;
 
 public struct Prop(string key, string value)
 {

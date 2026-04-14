@@ -2,9 +2,9 @@ using System.Threading.Tasks;
 using System.Linq;
 using System;
 
-using PlaywrightSharp.models;
+using JADE.models;
 
-namespace PlaywrightSharp.Backend;
+namespace JADE.Backend;
 
 public partial class BackendNavigation
 {

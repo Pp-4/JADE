@@ -8,11 +8,11 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Playwright;
 
-using PlaywrightSharp.models;
-using PlaywrightSharp.Backend;
+using JADE.models;
+using JADE.Backend;
 using System.Reflection;
 
-namespace PlaywrightSharp;
+namespace JADE;
 
 public partial class Program
 {

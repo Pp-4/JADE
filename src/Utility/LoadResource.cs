@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.IO;
 
-namespace PlaywrightSharp;
+namespace JADE;
 
 public partial class Program
 {

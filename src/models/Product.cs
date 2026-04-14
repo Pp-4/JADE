@@ -3,10 +3,10 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Linq;
 
-using PlaywrightSharp.RegularEx;
-using static PlaywrightSharp.Utility.Parsing;
+using JADE.RegularEx;
+using static JADE.Utility.Parsing;
 
-namespace PlaywrightSharp.models;
+namespace JADE.models;
 
 public class Product(string someid)
 {

@@ -4,9 +4,9 @@ using System.Text.Json;
 using System.IO;
 using System;
 
-using PlaywrightSharp.models;
+using JADE.models;
 
-namespace PlaywrightSharp.Backend;
+namespace JADE.Backend;
 
 public partial class BackendNavigation
 {
