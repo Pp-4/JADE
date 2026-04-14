@@ -9,7 +9,10 @@ playwright-user-data
 #exclude temporary files
 src/GetProductData
 src/js
+
+#exclude solution files
 .sln
+.slnx
 
 #exclude all plugins except the example one
 Plugins
