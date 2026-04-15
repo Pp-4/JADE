@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <DebugType>portable</DebugType>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="JADE">
@@ -16,4 +15,9 @@
     <PackageReference Include="Microsoft.Playwright" Version="1.58.0" />
     <EmbeddedResource Include="*.js" />
   </ItemGroup>
+  <PropertyGroup>
+    <CreateHardLinksForCopyFilesToOutputDirectory>true</CreateHardLinksForCopyFilesToOutputDirectory>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <PlaywrightCopyToOutput>false</PlaywrightCopyToOutput>
+</PropertyGroup>
 </Project>
