@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Reflection;
 using System.Text.Json;
 using System.Net.Http;
 using System.Linq;
@@ -48,26 +49,32 @@ public abstract class Manufacturer(IPage _page, IConfiguration _config)
 
         // find product atributes
         // TODO modify to LoadResource to look inside asembly for it
-        var script = Program.LoadResource(JsSnippet);
+        var script = LoadResource(JsSnippet);
         await page.AddScriptTagAsync(new() { Content = script });
 
         string result = await page.EvaluateAsync<string>("runScript()");
-        List<Prop> parsed = JsonSerializer.Deserialize<List<Prop>>(result);
-        parsed = FilterAttributes(parsed);
-        product.RawDescription = parsed;
-        Console.WriteLine($"Found {product.RawDescription.Count} product properties");
+        List<Prop>? parsed = JsonSerializer.Deserialize<List<Prop>>(result);
+        if (parsed is not null)
+        {
+            parsed = FilterAttributes(parsed);
+            product.RawDescription = parsed;
+            Console.WriteLine($"Found {product.RawDescription.Count} product properties");
+        }
+        else
+            Console.WriteLine("No product properties found");
 
         // find product images
         try
         {
-            Directory.CreateDirectory(config["imgDir"]);
+            string imgDir = config["imgDir"] ?? throw new KeyNotFoundException("No image directory was specified!");
+            Directory.CreateDirectory(imgDir);
             Console.WriteLine("Looking for product images");
             List<string> links = await LocateImages(product);
             if (links.Count == 0)
                 Console.WriteLine($"No images of product found");
             else
             {
-                string path = Path.Combine(config["imgDir"], $"{product.ProductId}/");
+                string path = Path.Combine(imgDir, $"{product.ProductId}/");
                 int imageNumber = 0;
                 int localImgCount = 0;
                 if (Directory.Exists(path))
@@ -89,16 +96,24 @@ public abstract class Manufacturer(IPage _page, IConfiguration _config)
                     using var client = new HttpClient();
                     foreach (var link in links)
                     {
-                        //TODO this whole needs refactor ,exclude base64 data images
-                        var bytes = await client.GetByteArrayAsync(link);
-                        string imgType = Utility.ImageData.GetImageFileType(bytes);
-                        //TODO refactor - check size before downloading, as this may bite you in the ass
-                        if (bytes.Length < MaxImgSize && imgType != string.Empty)
+                        var request = new HttpRequestMessage(HttpMethod.Head, link);
+                        var response = await client.SendAsync(request);
+                        long? size = 0;
+                        if (response.IsSuccessStatusCode)
+                            size = response.Content.Headers.ContentLength;
+                        //download if img size is not specfied or below max allowed size
+                        if (!response.IsSuccessStatusCode || size < MaxImgSize)
                         {
-                            string imgPath = Path.Combine(path, $"{product.ProductId}_{imageNumber}{imgType}");
-                            await File.WriteAllBytesAsync(imgPath, bytes);
-                            imageNumber++;
+                            var bytes = await client.GetByteArrayAsync(link);
+                            string imgType = Utility.ImageData.GetImageFileType(bytes);
+                            if (bytes.Length < MaxImgSize && imgType != string.Empty)
+                            {
+                                string imgPath = Path.Combine(path, $"{product.ProductId}_{imageNumber}{imgType}");
+                                await File.WriteAllBytesAsync(imgPath, bytes);
+                                imageNumber++;
+                            }
                         }
+
                     }
                 }
                 Console.WriteLine($"Found {links.Count} images, saved {imageNumber} of them to {path}");
@@ -161,4 +176,21 @@ public abstract class Manufacturer(IPage _page, IConfiguration _config)
     /// </summary>
     /// <returns></returns>
     protected virtual async Task<List<string>> LocateDescription() => [];
+
+    protected string LoadResource(string name)
+    {
+        //derieved assembly
+        Assembly assembly = GetType().Assembly;
+        string? assemblyName = assembly.GetName().Name;
+        //base assembly
+        Assembly baseAssembly = Assembly.GetExecutingAssembly();
+        using Stream? stream = assembly.GetManifestResourceStream(assemblyName + '.' + name) ??
+                               baseAssembly.GetManifestResourceStream(name);
+        if (stream is not null)
+        {
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        throw new FileNotFoundException($"{name} resource not found!");
+    }
 }
