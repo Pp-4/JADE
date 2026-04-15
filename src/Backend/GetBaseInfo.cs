@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
@@ -12,8 +13,8 @@ public partial class BackendNavigation
     async Task<Product> GetBaseInfo(string someId)
     {
         Console.WriteLine($"Finding data about {someId}");
-
-        if (!page.Url.StartsWith(config["backend"]))
+        string backend = config["backend"] ?? throw new KeyNotFoundException("Missing backend path!");
+        if (!page.Url.StartsWith(backend))
             await LogIn();
         try
         {
@@ -33,12 +34,12 @@ public partial class BackendNavigation
         }
         await page.Locator(".absui-icon.absui-icon--keyboard-arrow-right2").ClickAsync();
         await page.GetByText("Atrybuty").First.ClickAsync();
-        string productID = await page.Locator("//tr[td[normalize-space()='Indeks katalogowy']]/td[position()=3]").TextContentAsync();
-        string tradeID = await page.Locator("//tr[td[normalize-space()='Indeks handlowy']]/td[position()=3]").TextContentAsync();
-        string manufactuer = await page.Locator("//tr[td[normalize-space()='Producent']]/td[position()=3]").TextContentAsync();
+        string? productID = await page.Locator("//tr[td[normalize-space()='Indeks katalogowy']]/td[position()=3]").TextContentAsync();
+        string? tradeID = await page.Locator("//tr[td[normalize-space()='Indeks handlowy']]/td[position()=3]").TextContentAsync();
+        string? manufactuer = await page.Locator("//tr[td[normalize-space()='Producent']]/td[position()=3]").TextContentAsync();
         Product product = new(someId)
         {
-            Manufactuer = string.Join(' ', manufactuer.Split(' ').Take(2)),
+            Manufactuer = string.Join(' ', (manufactuer ?? "").Split(' ').Take(2)),
             ProductId = productID,
             TradeId = tradeID
         };

@@ -18,27 +18,32 @@ public partial class Program
         int preFilled = 0;
         int notFound = 0;
 
+        string? prodId;
+        string? manufac;
+        string imgDir = config["imgDir"]!;
+
         Console.WriteLine("Begin fetching data from manufacturers");
         for (int i = 0; i < products.Count; i++)
         {
-            if (products[i].VoidProduct)
+            prodId = products[i].ProductId;
+            if (products[i].VoidProduct || prodId is null)
             {//skip products that were not found during initial backend fetch
                 notFound++;
                 continue;
             }
-            string path = Path.Combine(config["imgDir"], products[i].ProductId);
+            string path = Path.Combine(imgDir, prodId);
             //dont look for products that are implemented or void, unless forceImplemented flag is set to 1
             if (!products[i].Implemented &&
                 !products[i].VoidProduct && (
-                products[i].RawDescription == null ||
-                products[i].RawDescription.Count == 0 ||
+                (products[i].RawDescription?.Count ?? 0) == 0 ||
                 !Directory.Exists(path) ||
                 Directory.GetFiles(path).Length == 0) ||
                 products[i].ForceImpl)
             {
                 count++;
-                if (manufacturers.ContainsKey(products[i].Manufactuer))
-                    products[i] = await manufacturers[products[i].Manufactuer].GetProductData(products[i]);
+                manufac = products[i].Manufactuer;
+                if (manufac is not null && manufacturers.ContainsKey(manufac))
+                    products[i] = await manufacturers[manufac].GetProductData(products[i]);
                 else
                 {
                     products[i].Skipped = true;

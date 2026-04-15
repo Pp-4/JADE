@@ -7,6 +7,7 @@ using JADE.models;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace JADE.Backend;
 
@@ -15,15 +16,22 @@ public partial class BackendNavigation //: PageTest
     public async Task FillProductInfo(Product product)
     {
         Console.WriteLine($"Filling information about {product}");
+        string? backend = config["backend"]!;
+        string? prodId = product.ProductId;
+        if (prodId is null)
+        {
+            Console.WriteLine($"Product {product} has no id!");
+            return;
+        }
         try
         {
-            if (!page.Url.StartsWith(config["backend"]))
+            if (!page.Url.StartsWith(backend))
                 await LogIn();
-            await page.GotoAsync($"{config["backend"]}?indexCatalogue={product.ProductId}");
-            await page.Locator("td:nth-child(3)").Filter(new() { HasTextRegex = new Regex($"^{product.ProductId}$") }).First.ClickAsync();
+            await page.GotoAsync($"{backend}?indexCatalogue={prodId}");
+            await page.Locator("td:nth-child(3)").Filter(new() { HasTextRegex = new Regex($"^{prodId}$") }).First.ClickAsync();
 
             await AddDescryption(product);
-            await AddImages(product.ProductId);
+            await AddImages(prodId);
             if (await ActivateProduct())
             {
                 product.Implemented = true;
@@ -85,8 +93,9 @@ public partial class BackendNavigation //: PageTest
     async Task AddImages(string productId)
     {
         Console.WriteLine("Adding images to product");
+        string imgDir = config["imgDir"] ?? throw new KeyNotFoundException("Missing image directory path!");
         //try to add product images
-        string path = Path.Combine(config["imgDir"], productId);
+        string path = Path.Combine(imgDir, productId);
 
         int.TryParse(config["addImagesTimeoutMiliseconds"], out int timeout);
         timeout = timeout < 1000 ? 1000 : 30 * 1000;
