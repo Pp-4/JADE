@@ -12,12 +12,10 @@
       <Private>false</Private>
     </Reference>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Playwright" Version="1.58.0" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.58.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>compile</IncludeAssets>
+      </PackageReference>
     <EmbeddedResource Include="*.js" />
   </ItemGroup>
-  <PropertyGroup>
-    <CreateHardLinksForCopyFilesToOutputDirectory>true</CreateHardLinksForCopyFilesToOutputDirectory>
-    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
-    <PlaywrightCopyToOutput>false</PlaywrightCopyToOutput>
-</PropertyGroup>
 </Project>
