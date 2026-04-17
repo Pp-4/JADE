@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq;
 using System.IO;
 using System;
 
@@ -49,7 +48,7 @@ public partial class BackendNavigation(IPage _page, IConfiguration _config)
             Console.WriteLine($"Loading product list from {path}");
             if (Path.GetExtension(path) == ".csv")
                 productIds = DataFrame.LoadCsv(path, ',', true, dataTypes: [typeof(string)]);
-            else productIds = DataFrame.LoadCsv(path, header: false, dataTypes: [typeof(string)]);
+            else productIds = DataFrame.LoadCsv(path, header: false, dataTypes: [typeof(string)], separator: ';');
         }
         catch (Exception e)
         {
@@ -57,13 +56,24 @@ public partial class BackendNavigation(IPage _page, IConfiguration _config)
         }
         if (!page.Url.StartsWith(backend))
             await LogIn();
+
+        Dictionary<string, Product> mappedProducts = [];
+        foreach (Product product in products)
+        {
+            if (product.TradeId is not null)
+                mappedProducts.Add(product.TradeId, product);
+            if (product.ProductId is not null)
+                mappedProducts.Add(product.ProductId, product);
+            if (product.SomeId is not null && !mappedProducts.ContainsKey(product.SomeId))
+                mappedProducts.Add(product.SomeId, product);
+        }
+
         foreach (DataFrameRow row in productIds.Rows)
         {
             //might be tradeId, might be productId
             string? someId = row[0].ToString();
-
             //don't add if there is already a copy of it, skip #comments
-            if (someId is not null && !someId.Contains('#') && !products.Any(x => x.SomeId == someId))
+            if (someId is not null && !someId.Contains('#') && !mappedProducts.ContainsKey(someId))
             {
                 Product product = await GetBaseInfo(someId);
                 products.Add(product);
