@@ -77,8 +77,11 @@ public class Product(string someid)
     //filter out bad atribiutes
     private bool PassFiler(Prop prop)
     {
-        if (TradeId is not null && prop.Value.Contains(TradeId) && !prop.Key.ToLower().Contains("ean")) return false;
-        if (ProductId is not null && prop.Value.Contains(ProductId)) return false;
+        if (prop.Value is not null)
+        {
+            if (TradeId is not null && prop.Value.Contains(TradeId) && !prop.Key.ToLower().Contains("ean")) return false;
+            if (ProductId is not null && prop.Value.Contains(ProductId)) return false;
+        }
         if (prop.Key.ToLower().Contains("gwara")) return false;
         if (manufactuerObject is not null)
         {
