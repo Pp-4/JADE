@@ -20,7 +20,7 @@ public partial class Program
 
         products = await navigate.GetProducts(products);
 
-        products = [.. products.DistinctBy(x => x.ProductId)];
+        products = [.. products.DistinctBy(x => x.ProductId ?? x.SomeId)];
         products = [.. products.OrderBy(x => x.Manufactuer).ThenBy(x => x.ProductId)];
         Console.WriteLine($"Fetching complete, fetched {products.Count} products");
         return products;
