@@ -5,7 +5,7 @@ using System.Linq;
 
 using JADE.RegularEx;
 using JADE.Utility;
-using System.Net.ServerSentEvents;
+using System;
 
 namespace JADE.models;
 
@@ -20,7 +20,7 @@ public class Product(string? someid)
     public string Description { get { return WrapDescriptionInHtml(); } }
     public List<Prop>? RawDescription { get; set; }
     //product manufacturer
-    public string? Manufactuer { get; set; }
+    public string? Manufacturer { get; set; }
     [JsonIgnore]
     public Manufacturer? manufactuerObject;
     //cleaned up version of tradeId
@@ -72,7 +72,13 @@ public class Product(string? someid)
         {
             Match match = RegExpressions.GetShortTradeId().Match(TradeId);
             if (match.Success)
-                return match.Groups[1].Value;
+            {
+                string ShortTradeId = match.Groups[1].Value;
+                if (ShortTradeId.Length < 4 && TradeId.Count(x => x == '\\') == 1)
+                    return TradeId;
+                return ShortTradeId;
+            }
+            return TradeId;
         }
         return "";
     }
@@ -97,5 +103,65 @@ public class Product(string? someid)
     private List<Prop> GroupSort(List<Prop> list)
     {
         return list;
+    }
+
+    public bool Equals(Product? other)
+    {
+        if (ReferenceEquals(this, other))
+            return true;
+        if (other is null)
+            return false;
+        if (this.SomeId is not null && other.SomeId is not null)
+            return this.SomeId == other.SomeId;
+        if (this.SomeId is null && other.SomeId is null)
+            return this.ProductId == other.ProductId;
+        if (this.SomeId is null && other.SomeId is not null)
+            return this.ProductId == other.SomeId || this.TradeId == other.SomeId || this.ShortTradeId == other.SomeId;
+        return this.SomeId == other.ProductId || this.SomeId == other.TradeId || this.SomeId == other.ShortTradeId;
+    }
+
+    public Product MarkAsImplemented()
+    {
+        this.SkipCount = 0;
+        this.Skipped = false;
+        this.Implemented = true;
+        this.VoidProduct = false;
+        return this;
+    }
+    public Product MarkAsVoid()
+    {
+        this.Skipped = true;
+        this.VoidProduct = true;
+        this.Implemented = false;
+        this.Manufacturer = null;
+        this.ProductId = null;
+        this.TradeId = null;
+        return this;
+    }
+    public Product Resolve(string ProductId, string TradeId, string Manufacturer)
+    {
+        this.ProductId = ProductId;
+        this.TradeId = TradeId;
+        this.Manufacturer = Manufacturer;
+        this.Implemented = false;
+        this.VoidProduct = false;
+        this.SomeId = null;
+        return this;
+    }
+    public Product MergeProduct(Product other)
+    {
+        this.SomeId ??= other.SomeId;
+        this.ProductId ??= other.ProductId;
+        this.TradeId ??= other.TradeId;
+        this.Manufacturer ??= other.Manufacturer;
+        this.manufactuerObject ??= other.manufactuerObject;
+        this.RawDescription ??= other.RawDescription;
+        this.ForceImpl |= other.ForceImpl;
+        this.VoidProduct |= other.VoidProduct;
+        this.Implemented |= other.Implemented;
+        this.Skipped |= other.Skipped;
+        this.SkipCount = this.SkipCount > other.SkipCount ? this.SkipCount : other.SkipCount;
+        if (this.ProductId is not null) this.SomeId = null;
+        return this;
     }
 }

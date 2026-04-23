@@ -7,6 +7,7 @@ using JADE.models;
 using JADE.Backend;
 using JADE.Utility;
 using System.IO;
+using System.Text.Json;
 
 namespace JADE;
 
@@ -37,16 +38,32 @@ public partial class Program
         }
         else
             Console.WriteLine($"Invalid path dir:{directory} file:{prodFile}");
-        products = [.. products.DistinctBy(x => x.SomeId).DistinctBy(x => x.ProductId ?? x.SomeId).DistinctBy(x => x.TradeId ?? x.SomeId)];
-        products = [.. products.OrderBy(x => x.Manufactuer).ThenBy(x => x.ProductId)];
+        //products = [.. products.DistinctBy(x => x.SomeId).DistinctBy(x => x.ProductId ?? x.SomeId).DistinctBy(x => x.TradeId ?? x.SomeId)];
+        DeDuplicate(ref products);
+        products = [.. products.OrderBy(x => x.Manufacturer).ThenBy(x => x.ProductId)];
         Console.WriteLine($"Loading complete, loaded total of {products.Count} products");
         for (int i = 0; i < products.Count; i++)
         {
-            if (products[i].ProductId is null || products[i].TradeId is null || products[i].Manufactuer is null)
+            if (products[i].ProductId is null || products[i].TradeId is null || products[i].Manufacturer is null)
             {
                 string? someId = products[i].SomeId;
                 if (someId is not null && !products[i].VoidProduct)
-                    products[i] = await navigate.GetBaseInfo(someId);
+                {
+                    try
+                    {
+                        //reading data from backend
+                        products[i] = await navigate.GetBaseInfo(someId);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Error during reading base info {e.Message}");
+                        Console.WriteLine("Emergency data save and shutdown!");
+                        string filePath = Path.Combine(config["data"] ?? "", config["prodData"] ?? "");
+                        var serializedProducts = JsonSerializer.Serialize(products);
+                        await File.WriteAllTextAsync(filePath, serializedProducts);
+                        throw;
+                    }
+                }
             }
         }
         return products;
@@ -57,5 +74,25 @@ public partial class Program
         {
             yield return new Product(someId);
         }
+    }
+    public static void DeDuplicate(ref List<Product> products)
+    {
+        for (int i = 0; i < products.Count; i++)
+        {
+            if (products[i].ProductId is not null)
+                products[i].SomeId = null;
+        }
+        for (int i = 0; i < products.Count; i++)
+        {
+            for (int j = 0; j < products.Count; j++)
+            {
+                if (i != j && products[i].Equals(products[j]))
+                {
+                    products[i] = products[i].MergeProduct(products[j]);
+                    products[j] = new(null);
+                }
+            }
+        }
+        products = [.. products.Where(x => x.SomeId is not null || x.ProductId is not null)];
     }
 }

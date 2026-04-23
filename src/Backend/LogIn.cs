@@ -10,7 +10,7 @@ public partial class BackendNavigation
 {
     public async Task LogIn()
     {
-        Console.WriteLine("Loging into backend");
+
         string? userName = config["Backend:Username"];
         string? userPass = config["Backend:Password"];
         string? backend = config["backend"];
@@ -20,6 +20,7 @@ public partial class BackendNavigation
         await page.GotoAsync(backend);
         if (page.Url.StartsWith(backend))
             return;
+        Console.WriteLine("Loging into backend");
         await page.GetByRole(AriaRole.Textbox, new() { Name = "Identyfikator:" }).ClickAsync();
         await page.GetByRole(AriaRole.Textbox, new() { Name = "Identyfikator:" }).FillAsync(userName);
         await page.GetByRole(AriaRole.Textbox, new() { Name = "Hasło:" }).ClickAsync();

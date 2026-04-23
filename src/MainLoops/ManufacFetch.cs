@@ -42,13 +42,12 @@ public partial class Program
                 products[i].ForceImpl)
             {
                 count++;
-                manufac = products[i].Manufactuer;
+                manufac = products[i].Manufacturer;
                 if (manufac is not null && manufacturers.ContainsKey(manufac))
                     products[i] = await manufacturers[manufac].GetProductData(products[i]);
                 else
                 {
                     products[i].Skipped = true;
-                    products[i].SkipCount ++;;
                     count--;
                     skipped++;
                 }
