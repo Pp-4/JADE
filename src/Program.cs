@@ -17,28 +17,18 @@ namespace JADE;
 public partial class Program
 {
     static readonly string configFileName = "JadeConfig.json";
+    public static IConfiguration config = new ConfigurationBuilder()
+                                    .AddJsonFile(configFileName, optional: false)
+                                    .AddInMemoryCollection(new Dictionary<string, string?>
+                                    {
+                                        {"browserDir","playwright-user-data"},
+                                        {"imageLImit", "3"}
+                                    })
+                                    .AddUserSecrets<Program>().Build();
+
     public static async Task<int> Main(string[] args)
     {
         Console.WriteLine("Begin initialisation");
-        IConfiguration config;
-        try
-        {
-            config = new ConfigurationBuilder()
-                .AddJsonFile(configFileName, optional: false)
-                .AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    {"browserDir","playwright-user-data"},
-                    {"imageLImit", "3"}
-                })
-                .AddUserSecrets<Program>()
-                .Build();
-        }
-        catch
-        {
-            Console.WriteLine($"Config file ({configFileName}) not found");
-            Console.WriteLine($"While this file may be empty it must be created by user for reasons xd");
-            return -1;
-        }
         using IPlaywright playwright = await Playwright.CreateAsync();
 
         await using IBrowserContext context = await playwright.Chromium.LaunchPersistentContextAsync
@@ -52,7 +42,7 @@ public partial class Program
             "--disable-web-security",
                 "--disable-features=IsolateOrigins,site-per-process"
         ],
-            ViewportSize = new ViewportSize() { Height = 1080, Width = 1920 },
+            ViewportSize = new ViewportSize() { Height = 1016, Width = 1920 },
             ExtraHTTPHeaders = new Dictionary<string, string> {
                 { "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8" },
                 { "Accept-Language", "pl-PL,en-US,en;q=0.5" },

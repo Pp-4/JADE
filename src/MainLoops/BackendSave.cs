@@ -4,6 +4,8 @@ using System;
 
 using JADE.models;
 using JADE.Backend;
+using System.Text.Json;
+using System.IO;
 
 namespace JADE;
 
@@ -15,18 +17,30 @@ public partial class Program
         int skipped = 0;
 
         Console.WriteLine("Begin saving data to backend");
-        foreach (var product in products)
+        try
         {
-            if (!product.Implemented &&
-                !product.Skipped &&
-                !product.VoidProduct &&
-                product.RawDescription?.Count > 0 ||
-                product.ForceImpl)
+            for (int i = 0; i < products.Count; i++)
             {
-                await navigate.FillProductInfo(product);
-                count++;
+                if (!products[i].Implemented &&
+                    !products[i].Skipped &&
+                    !products[i].VoidProduct &&
+                    products[i].RawDescription?.Count > 0 ||
+                    products[i].ForceImpl)
+                {
+                    products[i] = await navigate.FillProductInfo(products[i]);
+                    count++;
+                }
+                else skipped++;
             }
-            else skipped++;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Critical error {e.Message}");
+            Console.WriteLine("Emergency data save and shutdown!");
+            string filePath = Path.Combine(config["data"] ?? "", config["prodData"] ?? "");
+            var serializedProducts = JsonSerializer.Serialize(products);
+            await File.WriteAllTextAsync(filePath, serializedProducts);
+            throw;
         }
         Console.WriteLine($"Saving data completed, saved {count} and skipped {skipped} products");
         return products;
