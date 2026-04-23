@@ -65,7 +65,7 @@ public abstract class Manufacturer
         {
             Console.WriteLine($"Error while searching: {ex.Message}");
             product.Skipped = true;
-            product.SkipCount ++;
+            product.SkipCount++;
             return product;
         }
 
@@ -88,7 +88,7 @@ public abstract class Manufacturer
         {
             Console.WriteLine($"Error when trying to get the attributes: {e.Message}");
             product.Skipped = true;
-            product.SkipCount ++;
+            product.SkipCount++;
             return product;
         }
 
@@ -129,22 +129,29 @@ public abstract class Manufacturer
                     }
                     foreach (var link in links)
                     {
-                        var request = new HttpRequestMessage(HttpMethod.Head, link);
-                        var response = await client.SendAsync(request);
-                        long? size = 0;
-                        if (response.IsSuccessStatusCode)
-                            size = response.Content.Headers.ContentLength;
-                        //download if img size is not specfied or below max allowed size
-                        if (!response.IsSuccessStatusCode || size is null || size < MaxImgSize)
+                        try
                         {
-                            var bytes = await client.GetByteArrayAsync(link);
-                            string imgType = Utility.ImageData.GetImageFileType(bytes);
-                            if (bytes.Length < MaxImgSize && imgType != string.Empty)
+                            var request = new HttpRequestMessage(HttpMethod.Head, link);
+                            var response = await client.SendAsync(request);
+                            long? size = 0;
+                            if (response.IsSuccessStatusCode)
+                                size = response.Content.Headers.ContentLength;
+                            //download if img size is not specfied or below max allowed size
+                            if (!response.IsSuccessStatusCode || size is null || size < MaxImgSize)
                             {
-                                string imgPath = Path.Combine(path, $"{product.ProductId}_{imageNumber}{imgType}");
-                                await File.WriteAllBytesAsync(imgPath, bytes);
-                                imageNumber++;
+                                var bytes = await client.GetByteArrayAsync(link);
+                                string imgType = Utility.ImageData.GetImageFileType(bytes);
+                                if (bytes.Length < MaxImgSize && imgType != string.Empty)
+                                {
+                                    string imgPath = Path.Combine(path, $"{product.ProductId}_{imageNumber}{imgType}");
+                                    await File.WriteAllBytesAsync(imgPath, bytes);
+                                    imageNumber++;
+                                }
                             }
+                        }
+                        catch (NotSupportedException)
+                        {
+                            Console.WriteLine($"Skipping not supported image type");
                         }
                     }
                 }
@@ -152,14 +159,14 @@ public abstract class Manufacturer
                 if (imageNumber == 0 && localImgCount != 0)
                     Console.WriteLine($"({localImgCount} image{(localImgCount > 1 ? "s" : "")} already exist{(localImgCount > 1 ? " " : "s")}) ");
                 else if (imageNumber == 0 && localImgCount == 0)
-                product.SkipCount++;
+                    product.SkipCount++;
             }
         }
         catch (Exception e)
         {
             Console.WriteLine($"Error when trying to get the images: {e.Message}");
             product.Skipped = true;
-            product.SkipCount ++;
+            product.SkipCount++;
             return product;
         }
         return product;

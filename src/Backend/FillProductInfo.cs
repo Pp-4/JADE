@@ -12,7 +12,7 @@ using JADE.Utility;
 
 namespace JADE.Backend;
 
-public partial class BackendNavigation //: PageTest
+public partial class BackendNavigation
 {
     public async Task<Product> FillProductInfo(Product product)
     {
@@ -26,20 +26,13 @@ public partial class BackendNavigation //: PageTest
         }
         try
         {
-            if (!page.Url.StartsWith(backend))
-                await LogIn();
+            await LogIn();
             await page.GotoAsync($"{backend}?indexCatalogue={prodId}");
             await page.Locator("td:nth-child(3)").Filter(new() { HasTextRegex = new Regex($"^{prodId}$") }).First.ClickAsync();
-
             await AddDescryption(product);
             await AddImages(prodId);
             if (await ActivateProduct())
-            {
-                product.Implemented = true;
-                product.Skipped = false;
-                product.SkipCount = 0;
-                product.VoidProduct = false;
-            }
+                product.MarkAsImplemented();
             Console.WriteLine($"Completed");
             return product;
         }
@@ -53,42 +46,35 @@ public partial class BackendNavigation //: PageTest
     async Task AddDescryption(Product product)
     {
         await page.GetByText("Tłumaczenia").First.ClickAsync();
-        await page.WaitForTimeoutAsync(1000);
-        await page.EvaluateAsync(@"integrateButton = document.querySelectorAll('div.absui-column div.abs-row div.abs-row>div.abs-row>div>input.absui-switch')[2]
-                                       integrateButton.scrollIntoView();
-                                       if(integrateButton.checked) integrateButton.click();");
-        //easier to get the button to be visible with js than playwright
-        try
-        {
-            await page.WaitForLoadStateAsync();
-            //await Expect(page.Locator("span,absui-icon--mode-edit").First).ToBeVisibleAsync();
-            await page.EvaluateAsync(@"invisibleEditButton = document.querySelector('span.absui-icon--mode-edit').parentElement;
-                                       invisibleEditButton.style.visibility = 'visible';
-                                       invisibleEditButton.scrollIntoView();
-                                       invisibleEditButton.click();");
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-            await page.WaitForTimeoutAsync(1000);
-            await page.EvaluateAsync(@"invisibleEditButton = document.querySelector('span.absui-icon--mode-edit').parentElement;
-                                       invisibleEditButton.style.visibility = 'visible';
-                                       invisibleEditButton.scrollIntoView();
-                                       invisibleEditButton.click();");
-        }
-        await page.GetByRole(AriaRole.Button, new() { Name = "Pokaż więcej" }).ClickAsync();
-        await page.GetByRole(AriaRole.Button, new() { Name = "Źródło" }).ClickAsync();
-        var element = page.GetByRole(AriaRole.Textbox, new() { Name = "Source code editing area" });
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 
+        var checkbox = page.GetByRole(AriaRole.Checkbox).Nth(5);
+        if (await checkbox.IsCheckedAsync())
+            await checkbox.ClickAsync();
+
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        await page.Locator(".K1YXcinUNlAHTpehalfm").HoverAsync();
+        await page.Locator(".K1YXcinUNlAHTpehalfm button").First.ClickAsync();
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        await page.WaitForTimeoutAsync(100);
+        await page.GetByRole(AriaRole.Button, new() { Name = "Show more items" }).ClickAsync();
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        await page.WaitForTimeoutAsync(100);
+        await page.GetByRole(AriaRole.Button, new() { Name = "Source" }).ClickAsync();
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        var element = page.GetByRole(AriaRole.Textbox, new() { Name = "Source code editing area" });
         await element.ClickAsync();
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
         var text = await element.InputValueAsync();
         string description = await CheckPresentText(product, text, product.ForceImpl);
         await element.ClearAsync();
         await element.FillAsync(description);
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
         await page.EvaluateAsync("document.querySelectorAll('.k-pane.k-pane-static')[0].style.height = '90%'");
         var response = page.WaitForResponseAsync(r =>
                         r.Url.Contains("preview?redirect=false") &&
                         r.Request.Method == "POST" && r.Status == 200);
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
         //save result and wait for response
         await page.Locator("button[data-testid='decision-box-accept-button']").First.ClickAsync(new LocatorClickOptions() { Force = true });
         await response;
@@ -108,13 +94,16 @@ public partial class BackendNavigation //: PageTest
             localImg = Directory.GetFiles(path);
         if (localImg.Length > 0)
         {
-
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
             await page.EvaluateAsync(@"media = [...document.querySelectorAll('.absui-tabs-item__value')].filter(x => x.textContent == 'Media')[0];
                                            media.scrollIntoView();
                                            media.click();");
             //get already existing images
             await page.GetByRole(AriaRole.Listitem).GetByText("Zdjęcia").ClickAsync();
-            string images = await page.EvaluateAsync<string>("[...document.querySelectorAll('.abs-row.abs-row--flex-start-flex-start.abs-row--auto')].filter(x => x.textContent.includes('Zdjęcia'))[0].childNodes[1].textContent");
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+            var div = page.Locator("div:has(>span:text('Zdjęcia')) div >> div");
+            await div.WaitForAsync();
+            string images = await div.InnerTextAsync();
             int.TryParse(images, out int onlineImgCount);
             //var onlineImg = await page.Locator("i.absui-icon--user-files[data-testid='k2-icon']").AllAsync();
 
@@ -161,10 +150,5 @@ public partial class BackendNavigation //: PageTest
         else
             Console.WriteLine("Writing new description");
         return product.Description;
-    }
-
-    string FixPreviousDesc(string description)
-    {
-        return description;
     }
 }
