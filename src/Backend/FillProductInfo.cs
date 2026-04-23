@@ -8,12 +8,13 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using JADE.Utility;
 
 namespace JADE.Backend;
 
 public partial class BackendNavigation //: PageTest
 {
-    public async Task FillProductInfo(Product product)
+    public async Task<Product> FillProductInfo(Product product)
     {
         Console.WriteLine($"Filling information about {product}");
         string? backend = config["backend"]!;
@@ -21,7 +22,7 @@ public partial class BackendNavigation //: PageTest
         if (prodId is null)
         {
             Console.WriteLine($"Product {product} has no id!");
-            return;
+            return product;
         }
         try
         {
@@ -36,9 +37,11 @@ public partial class BackendNavigation //: PageTest
             {
                 product.Implemented = true;
                 product.Skipped = false;
+                product.SkipCount = 0;
                 product.VoidProduct = false;
             }
             Console.WriteLine($"Completed");
+            return product;
         }
         catch (Exception e)
         {
@@ -82,11 +85,12 @@ public partial class BackendNavigation //: PageTest
         string description = await CheckPresentText(product, text, product.ForceImpl);
         await element.ClearAsync();
         await element.FillAsync(description);
+        await page.EvaluateAsync("document.querySelectorAll('.k-pane.k-pane-static')[0].style.height = '90%'");
         var response = page.WaitForResponseAsync(r =>
                         r.Url.Contains("preview?redirect=false") &&
                         r.Request.Method == "POST" && r.Status == 200);
         //save result and wait for response
-        await page.Locator("button[data-testid='decision-box-accept-button']").First.ClickAsync();
+        await page.Locator("button[data-testid='decision-box-accept-button']").First.ClickAsync(new LocatorClickOptions() { Force = true });
         await response;
 
     }
@@ -109,19 +113,22 @@ public partial class BackendNavigation //: PageTest
                                            media.scrollIntoView();
                                            media.click();");
             //get already existing images
-            var onlineImg = await page.Locator("i.absui-icon--user-files[data-testid='k2-icon']").AllAsync();
+            await page.GetByRole(AriaRole.Listitem).GetByText("Zdjęcia").ClickAsync();
+            string images = await page.EvaluateAsync<string>("[...document.querySelectorAll('.abs-row.abs-row--flex-start-flex-start.abs-row--auto')].filter(x => x.textContent.includes('Zdjęcia'))[0].childNodes[1].textContent");
+            int.TryParse(images, out int onlineImgCount);
+            //var onlineImg = await page.Locator("i.absui-icon--user-files[data-testid='k2-icon']").AllAsync();
 
             //execute if the are more local images than online images
-            if (onlineImg.Count < localImg.Length && onlineImg.Count < 3)
+            if (onlineImgCount < localImg.Length && onlineImgCount < 3)
             {
                 //locate the save button
                 await page.GetByRole(AriaRole.Button, new() { Name = "Dodaj z dysku" }).ClickAsync();
                 var input = page.Locator("#root > :nth-child(7) .ygGNzPF6_qnwNrjgibGg");
 
                 //pad online images with up to 3 local ones
-                Array.Sort(localImg, (x, y) => Parse(x) - Parse(y));
+                Array.Sort(localImg, (x, y) => Parsing.GetFileNumber(x) - Parsing.GetFileNumber(y));
                 var addFiles = localImg.Take(3)
-                            .Where(x => Parse(x) > onlineImg.Count - 1)
+                            .Where(x => Parsing.GetFileNumber(x) > onlineImgCount - 1)
                             .ToArray();
                 await input.SetInputFilesAsync(addFiles);
                 await page.GetByRole(AriaRole.Button, new() { Name = "Zapisz" }).ClickAsync(new() { Force = true });

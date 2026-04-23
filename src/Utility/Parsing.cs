@@ -1,3 +1,7 @@
+using System.Text.RegularExpressions;
+using JADE.models;
+using JADE.RegularEx;
+
 namespace JADE.Utility;
 
 public static class Parsing
@@ -38,5 +42,38 @@ public static class Parsing
         str = str.Trim();
         return str == string.Empty ? str : $"{char.ToLowerInvariant(str[0])}{str[1..].ToString().ToUpper()}"; ;
     }
+    /// <summary>
+    /// return the number from the path ie. example/ex/img_123.jpg returns 123
+    /// non valid string will return 0
+    /// </summary>
+    /// <returns>number from string</returns>
+    public static int GetFileNumber(string nbr)
+    {
+        string temp = System.IO.Path.GetFileNameWithoutExtension(nbr).Split('_')[^1];
+        int.TryParse(temp, out int ret);
+        return ret;
+    }    //correct atribiutes
+    public static Prop Sanitize(Prop prop)
+    {
+        string Key = Capitalize(prop.Key);
+        Key = Key.Replace("<", "&lt;").Replace(">", "&gt;");
 
+        string Value = prop.Value.Replace("<", "&lt;").Replace(">", "&gt;");
+        if (Value.ToLower() == "no")
+            Value = "Nie";
+
+        Match match = RegExpressions.GetTextInBrackets().Match(Key);
+        if (match.Success)
+        {
+            //turn something like this:
+            //size [mm] : 13
+            //into this:
+            //size : 13 mm
+            Key = Key.Replace(match.Groups[0].Value, "");
+            Value = $"{Value} {FixSiSize(match.Groups[1].Value)}";
+        }
+        Key = Key.Replace(" ip", " IP").Replace(" ik", " IK");
+        Value = Value.Replace(" ip", " IP").Replace(" ik", " IK");
+        return new Prop(Key, Value);
+    }
 }

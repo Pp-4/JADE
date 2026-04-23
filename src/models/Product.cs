@@ -4,17 +4,18 @@ using System.Collections.Generic;
 using System.Linq;
 
 using JADE.RegularEx;
-using static JADE.Utility.Parsing;
+using JADE.Utility;
+using System.Net.ServerSentEvents;
 
 namespace JADE.models;
 
-public class Product(string someid)
+public class Product(string? someid)
 {
 #nullable enable
     public string? TradeId { get; set; }
     public string? ProductId { get; set; }
     //Initial id obtained during Phase 1
-    public string SomeId { get; set; } = someid;
+    public string? SomeId { get; set; } = someid;
     [JsonIgnore]
     public string Description { get { return WrapDescriptionInHtml(); } }
     public List<Prop>? RawDescription { get; set; }
@@ -26,6 +27,8 @@ public class Product(string someid)
     public string? ShortTradeId { get { return GenerateShortTradeId(); } }
     //was product skipped at any loop
     public bool Skipped { get; set; }
+    //how many times was product skipped
+    public int SkipCount { get; set; } = 0;
 
     //was product data saved back to backend ?
     public bool Implemented { get; set; }
@@ -50,7 +53,7 @@ public class Product(string someid)
             {
                 if (PassFiler(item))
                 {
-                    Prop prop = Sanitize(item);
+                    Prop prop = Parsing.Sanitize(item);
                     ret += $"<tr><td>{prop.Key}</td><td><b>{prop.Value}</b></td></tr>\n";
                 }
             }
@@ -89,30 +92,6 @@ public class Product(string someid)
                 return false;
         }
         return true;
-    }
-    //correct atribiutes
-    private Prop Sanitize(Prop prop)
-    {
-        string Key = Capitalize(prop.Key);
-        Key = Key.Replace("<", "&lt;").Replace(">", "&gt;");
-
-        string Value = prop.Value.Replace("<", "&lt;").Replace(">", "&gt;");
-        if (Value.ToLower() == "no")
-            Value = "Nie";
-
-        Match match = RegExpressions.GetTextInBrackets().Match(Key);
-        if (match.Success)
-        {
-            //turn something like this:
-            //size [mm] : 13
-            //into this:
-            //size : 13 mm
-            Key = Key.Replace(match.Groups[0].Value, "");
-            Value = $"{Value} {FixSiSize(match.Groups[1].Value)}";
-        }
-        Key = Key.Replace(" ip", " IP").Replace(" ik", " IK");
-        Value = Value.Replace(" ip", " IP").Replace(" ik", " IK");
-        return new(Key, Value);
     }
     //TODO group atributes into sections or smth
     private List<Prop> GroupSort(List<Prop> list)

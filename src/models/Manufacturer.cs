@@ -12,22 +12,45 @@ using Microsoft.Playwright;
 
 namespace JADE.models;
 
-public abstract class Manufacturer(IPage _page, IConfiguration _config)
+public abstract class Manufacturer
 {
-    protected IPage page = _page;
-    protected IConfiguration config = _config;
+    protected IPage page;
+    protected IConfiguration config;
+
+    public Manufacturer(IPage _page, IConfiguration _config)
+    {
+        page = _page;
+        config = _config;
+        foreach (var cookie in Cookies)
+        {
+            var cook = new Cookie
+            {
+                Name = cookie.Item1,
+                Value = cookie.Item2
+            };
+            page.Context.AddCookiesAsync([cook]);
+        }
+    }
+
     //put here primary name and aliases
     public abstract string[] Names { get; }
     //server address
     protected abstract string WebPage { get; }
     protected virtual int MaxImgSize => 256 * 1024;
     protected abstract string JsSnippet { get; }
-
-    //use this list for addidtional filtering
-    internal protected abstract List<string> FilterKeys { get; }
+    internal protected virtual List<string> FilterKeys { get; } = [];
+    internal protected virtual Dictionary<string, string> ReplaceKeys { get; } = [];
+    internal protected virtual Dictionary<string, string> ReplaceValues { get; } = [];
+    internal protected virtual List<(string, string[])> Headers { get; } = [];
+    internal protected virtual List<(string, string)> Cookies { get; } = [];
 
     public async Task<Product> GetProductData(Product product)
     {
+        product.Skipped = false;
+        product.Implemented = false;
+        product.VoidProduct = false;
+        product.RawDescription = null;
+
         try
         {
             if (product.ForceImpl)
@@ -41,27 +64,33 @@ public abstract class Manufacturer(IPage _page, IConfiguration _config)
         catch (Exception ex)
         {
             Console.WriteLine($"Error while searching: {ex.Message}");
-            product.RawDescription = null;
             product.Skipped = true;
-            //product.Implemented = false;
+            product.SkipCount ++;
             return product;
         }
 
-        // find product atributes
-        // TODO modify to LoadResource to look inside asembly for it
-        var script = LoadResource(JsSnippet);
-        await page.AddScriptTagAsync(new() { Content = script });
-
-        string result = await page.EvaluateAsync<string>("runScript()");
-        List<Prop>? parsed = JsonSerializer.Deserialize<List<Prop>>(result);
-        if (parsed is not null)
+        try
         {
-            parsed = FilterAttributes(parsed);
-            product.RawDescription = parsed;
-            Console.WriteLine($"Found {product.RawDescription.Count} product properties");
+            var script = LoadResource(JsSnippet);
+            await page.AddScriptTagAsync(new() { Content = script });
+            string result = await page.EvaluateAsync<string>("runScript()");
+            List<Prop>? parsed = JsonSerializer.Deserialize<List<Prop>>(result);
+            if (parsed is not null)
+            {
+                parsed = FilterAttributes(parsed);
+                product.RawDescription = parsed;
+                Console.WriteLine($"Found {product.RawDescription.Count} product attributes");
+            }
+            else
+                Console.WriteLine("No product attributes found");
         }
-        else
-            Console.WriteLine("No product properties found");
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error when trying to get the attributes: {e.Message}");
+            product.Skipped = true;
+            product.SkipCount ++;
+            return product;
+        }
 
         // find product images
         try
@@ -94,6 +123,10 @@ public abstract class Manufacturer(IPage _page, IConfiguration _config)
                     Directory.CreateDirectory(path);
                     localImgCount = Directory.GetFiles(path).Length;
                     using var client = new HttpClient();
+                    foreach ((string, string[]) header in Headers)
+                    {
+                        client.DefaultRequestHeaders.Add(header.Item1, header.Item2);
+                    }
                     foreach (var link in links)
                     {
                         var request = new HttpRequestMessage(HttpMethod.Head, link);
@@ -102,7 +135,7 @@ public abstract class Manufacturer(IPage _page, IConfiguration _config)
                         if (response.IsSuccessStatusCode)
                             size = response.Content.Headers.ContentLength;
                         //download if img size is not specfied or below max allowed size
-                        if (!response.IsSuccessStatusCode || size < MaxImgSize)
+                        if (!response.IsSuccessStatusCode || size is null || size < MaxImgSize)
                         {
                             var bytes = await client.GetByteArrayAsync(link);
                             string imgType = Utility.ImageData.GetImageFileType(bytes);
@@ -113,22 +146,22 @@ public abstract class Manufacturer(IPage _page, IConfiguration _config)
                                 imageNumber++;
                             }
                         }
-
                     }
                 }
                 Console.WriteLine($"Found {links.Count} images, saved {imageNumber} of them to {path}");
                 if (imageNumber == 0 && localImgCount != 0)
                     Console.WriteLine($"({localImgCount} image{(localImgCount > 1 ? "s" : "")} already exist{(localImgCount > 1 ? " " : "s")}) ");
+                else if (imageNumber == 0 && localImgCount == 0)
+                product.SkipCount++;
             }
         }
         catch (Exception e)
         {
             Console.WriteLine($"Error when trying to get the images: {e.Message}");
             product.Skipped = true;
+            product.SkipCount ++;
+            return product;
         }
-        product.Skipped = false;
-        product.Implemented = false;
-        product.VoidProduct = false;
         return product;
     }
 
@@ -191,6 +224,7 @@ public abstract class Manufacturer(IPage _page, IConfiguration _config)
             using var reader = new StreamReader(stream);
             return reader.ReadToEnd();
         }
-        throw new FileNotFoundException($"{name} resource not found!");
+        Console.WriteLine($"{name} resource not found!");
+        return "";
     }
 }

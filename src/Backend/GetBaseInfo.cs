@@ -10,7 +10,7 @@ namespace JADE.Backend;
 public partial class BackendNavigation
 {
 
-    async Task<Product> GetBaseInfo(string someId)
+    public async Task<Product> GetBaseInfo(string someId)
     {
         Console.WriteLine($"Finding data about {someId}");
         string backend = config["backend"] ?? throw new KeyNotFoundException("Missing backend path!");
@@ -37,7 +37,7 @@ public partial class BackendNavigation
         string? productID = await page.Locator("//tr[td[normalize-space()='Indeks katalogowy']]/td[position()=3]").TextContentAsync();
         string? tradeID = await page.Locator("//tr[td[normalize-space()='Indeks handlowy']]/td[position()=3]").TextContentAsync();
         string? manufactuer = await page.Locator("//tr[td[normalize-space()='Producent']]/td[position()=3]").TextContentAsync();
-        Product product = new(someId)
+        Product product = new(null)
         {
             Manufactuer = string.Join(' ', (manufactuer ?? "").Split(' ').Take(2)),
             ProductId = productID,

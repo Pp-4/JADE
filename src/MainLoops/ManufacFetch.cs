@@ -34,6 +34,7 @@ public partial class Program
             string path = Path.Combine(imgDir, prodId);
             //dont look for products that are implemented or void, unless forceImplemented flag is set to 1
             if (!products[i].Implemented &&
+                products[i].SkipCount < 3 && 
                 !products[i].VoidProduct && (
                 (products[i].RawDescription?.Count ?? 0) == 0 ||
                 !Directory.Exists(path) ||
@@ -47,6 +48,7 @@ public partial class Program
                 else
                 {
                     products[i].Skipped = true;
+                    products[i].SkipCount ++;;
                     count--;
                     skipped++;
                 }
