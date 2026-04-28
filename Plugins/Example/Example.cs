@@ -20,6 +20,9 @@ public class Example(IPage _page, IConfiguration config) : Manufacturer(_page, c
     public override string[] Names => ["EXAMPLE"];
     //256kb default
     protected override int MaxImgSize => base.MaxImgSize;
+    //put here additional headers that will be used when downloading images
+    protected override List<(string, string[])> Headers => [("User-Agent", ["Example UA"])];
+
     protected override async Task LocateProduct(Product product)
     {
         await page.WaitForLoadStateAsync();
@@ -31,6 +34,6 @@ public class Example(IPage _page, IConfiguration config) : Manufacturer(_page, c
         //put here code that can locate image's src on the product's page
         return [];
         // you can yous this if they can be find by a locator
-        return await SimpleLocateImages("DIV.example#locator example");
+        //return await SimpleLocateImages("DIV.example#locator example");
     }
 }

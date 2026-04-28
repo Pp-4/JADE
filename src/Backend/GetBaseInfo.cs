@@ -25,16 +25,6 @@ public partial class BackendNavigation
             Console.WriteLine($"{someId} not found in backend, marking as void");
             return new Product(someId).MarkAsVoid();
         }
-        //await page.Locator(".absui-icon.absui-icon--keyboard-arrow-right2").ClickAsync();
-        //await page.WaitForLoadStateAsync(Microsoft.Playwright.LoadState.DOMContentLoaded);
-        //await page.GetByText("Atrybuty").First.ClickAsync();
-        //await page.WaitForLoadStateAsync(Microsoft.Playwright.LoadState.DOMContentLoaded);
-        //await page.PauseAsync();
-        //string? productID = await page.Locator("//tr[td[normalize-space()='Indeks katalogowy']]/td[position()=3]").TextContentAsync();
-        //string? tradeID = await page.Locator("//tr[td[normalize-space()='Indeks handlowy']]/td[position()=3]").TextContentAsync();
-        //string? manufactuer = await page.Locator("//tr[td[normalize-space()='Producent']]/td[position()=3]").TextContentAsync();
-        //Product product = new Product(null).Resolve(productID ?? "", tradeID ?? "", string.Join(' ', (manufactuer ?? "").Split(' ').Take(2)));
-
     }
 
     //this is in case of recieving list with wrong type of id
