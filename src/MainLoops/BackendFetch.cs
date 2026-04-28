@@ -81,9 +81,7 @@ public partial class Program
         {
             if (products[i].ProductId is not null)
                 products[i].SomeId = null;
-        }
-        for (int i = 0; i < products.Count; i++)
-        {
+        
             for (int j = 0; j < products.Count; j++)
             {
                 if (i != j && products[i].Equals(products[j]))
