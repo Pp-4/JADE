@@ -44,25 +44,21 @@ public partial class Program
         Console.WriteLine($"Loading complete, loaded total of {products.Count} products");
         for (int i = 0; i < products.Count; i++)
         {
-            if (products[i].ProductId is null || products[i].TradeId is null || products[i].Manufacturer is null)
+            if (!products[i].HasBasicInfo() && !products[i].VoidProduct)
             {
-                string? someId = products[i].SomeId;
-                if (someId is not null && !products[i].VoidProduct)
+                try
                 {
-                    try
-                    {
-                        //reading data from backend
-                        products[i] = await navigate.GetBaseInfo(someId);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($"Error during reading base info {e.Message}");
-                        Console.WriteLine("Emergency data save and shutdown!");
-                        string filePath = Path.Combine(config["data"] ?? "", config["prodData"] ?? "");
-                        var serializedProducts = JsonSerializer.Serialize(products);
-                        await File.WriteAllTextAsync(filePath, serializedProducts);
-                        throw;
-                    }
+                    //reading data from backend
+                    products[i] = await navigate.GetBaseInfo(products[i]);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Error during reading base info {e.Message}");
+                    Console.WriteLine("Emergency data save and shutdown!");
+                    string filePath = Path.Combine(config["data"] ?? "", config["prodData"] ?? "");
+                    var serializedProducts = JsonSerializer.Serialize(products);
+                    await File.WriteAllTextAsync(filePath, serializedProducts);
+                    throw;
                 }
             }
         }
@@ -81,7 +77,7 @@ public partial class Program
         {
             if (products[i].ProductId is not null)
                 products[i].SomeId = null;
-        
+
             for (int j = 0; j < products.Count; j++)
             {
                 if (i != j && products[i].Equals(products[j]))
