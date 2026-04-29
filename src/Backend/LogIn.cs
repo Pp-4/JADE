@@ -21,10 +21,14 @@ public partial class BackendNavigation
         if (page.Url.StartsWith(backend))
             return;
         Console.WriteLine("Loging into backend");
-        await page.GetByRole(AriaRole.Textbox, new() { Name = "Identyfikator:" }).ClickAsync();
-        await page.GetByRole(AriaRole.Textbox, new() { Name = "Identyfikator:" }).FillAsync(userName);
-        await page.GetByRole(AriaRole.Textbox, new() { Name = "Hasło:" }).ClickAsync();
-        await page.GetByRole(AriaRole.Textbox, new() { Name = "Hasło:" }).FillAsync(userPass);
+        await page.PauseAsync();
+        var userNameField = page.GetByRole(AriaRole.Textbox, new() { Name = "Login:" });
+        await userNameField.ClickAsync();
+        await userNameField.FillAsync(userName);
+        await page.GetByRole(AriaRole.Button, new() { Name = "Dalej " }).ClickAsync();
+        var userPassField = page.GetByRole(AriaRole.Textbox, new() { Name = "Hasło:" });
+        await userPassField.ClickAsync();
+        await userPassField.FillAsync(userPass);
         await page.GetByText("Zapamiętaj mnie").ClickAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Zaloguj" }).ClickAsync();
         await page.GotoAsync(backend);
