@@ -9,21 +9,23 @@ namespace JADE.Backend;
 public partial class BackendNavigation
 {
 
-    public async Task<Product> GetBaseInfo(string someId)
+    public async Task<Product> GetBaseInfo(Product product)
     {
-        Console.WriteLine($"Finding data about {someId}");
+        string someId = product.ToString();
         await LogIn();
         try
         {
+            someId = product.SomeId ?? product.ProductId ?? product.TradeId ?? throw new Exception();
+            Console.WriteLine($"Finding data about {someId}");
             searchIdType = await GoToProduct(someId, searchIdType);
-            Product product = await SelectBestMatch(someId, searchIdType);
+            product.MergeProduct(await SelectBestMatch(someId, searchIdType));
             Console.WriteLine($"Data found: {product}, Manufacturer: {product.Manufacturer}");
             return product;
         }
         catch // product was not found at all
         {
             Console.WriteLine($"{someId} not found in backend, marking as void");
-            return new Product(someId).MarkAsVoid();
+            return product.MarkAsVoid();
         }
     }
 

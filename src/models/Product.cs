@@ -164,4 +164,7 @@ public class Product(string? someid)
         if (this.ProductId is not null) this.SomeId = null;
         return this;
     }
+    public bool HasBasicInfo() => !(string.IsNullOrEmpty(ProductId)
+                                || string.IsNullOrEmpty(TradeId)
+                                || string.IsNullOrEmpty(Manufacturer));
 }
