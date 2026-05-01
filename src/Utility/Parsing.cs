@@ -58,7 +58,9 @@ public static class Parsing
         string Key = Capitalize(prop.Key);
         Key = Key.Replace("<", "&lt;").Replace(">", "&gt;");
 
-        string Value = prop.Value.Replace("<", "&lt;").Replace(">", "&gt;");
+        string Value = prop.Value
+                        .Replace("<", "&lt;")
+                        .Replace(">", "&gt;").Replace("…"," do ");
         if (Value.ToLower() == "no")
             Value = "Nie";
 
