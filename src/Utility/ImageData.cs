@@ -1,35 +1,52 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace JADE.Utility;
 
+
+public struct ImageFormat(string Name, byte[] Signature, int ByteOffset)
+{
+    public string Name = Name;
+    public byte[] Signature = Signature;
+    public int ByteOffset = ByteOffset;
+}
 public static class ImageData
 {
-    static readonly (string, byte[])[] ImageType = [
-        ("png",  [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
-        ("webp", [0x57, 0x45, 0x42, 0x50]),
-        ("gif",  [0x47, 0x49, 0x46]),
-        ("bmp",  [0x42, 0x4D]),
-        ("jpg",  [0xFF, 0xD8])
+    static readonly ImageFormat[] ImageType = [
+        new ("png",  [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], 0),
+        new ("avif", [0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66], 4),
+        new ("gif",  [0x47, 0x49, 0x46, 0x38, 0x37, 0x61], 0),//2 gif standards
+        new ("gif",  [0x47, 0x49, 0x46, 0x38, 0x39, 0x61], 0),
+        new ("webp", [0x57, 0x45, 0x42, 0x50], 8),
+        new ("bmp",  [0x42, 0x4D], 0),
+        new ("jpg",  [0xFF, 0xD8, 0xFF], 0),
+        new ("ico",  [0x00, 0x00, 0x01, 0x00], 0)
+
     ];
-    public static string GetImageType(byte[] bytes)
+    public static string? GetImageFileType(byte[] bytes)
+    {
+        string? type = GetImageType(ref bytes);
+        if (type is null) return null;
+        else return '.' + type;
+    }
+    static string? GetImageType(ref byte[] bytes)
     {
         foreach (var type in ImageType)
         {
-            int i = 0;
-            while (bytes[i++] != type.Item2[0] && i < 1024) ;
-            if (i >= bytes.Length) break;
-            int j = 0;
-            while (j < type.Item2.Length)
-            {
-                if (bytes[i + j] == type.Item2[j]) j++;
-                else break;
-            }
-            return type.Item1;
+            if (TestFileType(ref bytes, type.Signature, type.ByteOffset))
+                return type.Name;
         }
-        return string.Empty;
+        return null;
     }
-    public static string GetImageFileType(byte[] bytes)
+
+    static bool TestFileType(ref byte[] source, byte[] sig, int offset)
     {
-        string type = GetImageType(bytes);
-        if (type != string.Empty) return '.' + type;
-        return string.Empty;
+        if (source.Length < sig.Length + offset) return false;
+        for (int i = 0; i < sig.Length; i++)
+        {
+            if (source[i + offset] != sig[i])
+                return false;
+        }
+        return true;
     }
 }

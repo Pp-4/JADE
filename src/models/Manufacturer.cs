@@ -140,8 +140,8 @@ public abstract class Manufacturer
                             if (!response.IsSuccessStatusCode || size is null || size < MaxImgSize)
                             {
                                 var bytes = await client.GetByteArrayAsync(link);
-                                string imgType = Utility.ImageData.GetImageFileType(bytes);
-                                if (bytes.Length < MaxImgSize && imgType != string.Empty)
+                                string? imgType = Utility.ImageData.GetImageFileType(bytes);
+                                if (bytes.Length < MaxImgSize && imgType is not null)
                                 {
                                     string imgPath = Path.Combine(path, $"{product.ProductId}_{imageNumber}{imgType}");
                                     await File.WriteAllBytesAsync(imgPath, bytes);
