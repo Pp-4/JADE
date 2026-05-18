@@ -32,9 +32,14 @@ public partial class Program
                 continue;
             }
             string path = Path.Combine(imgDir, prodId);
+
+            manufac = products[i].Manufacturer;
+            if (manufac is not null && manufacturers.ContainsKey(manufac))
+             products[i].manufactuerObject = manufacturers[manufac]; 
+
             //dont look for products that are implemented or void, unless forceImplemented flag is set to 1
             if (!products[i].Implemented &&
-                products[i].SkipCount < 3 && 
+                products[i].SkipCount < 3 &&
                 !products[i].VoidProduct && (
                 (products[i].RawDescription?.Count ?? 0) == 0 ||
                 !Directory.Exists(path) ||
@@ -42,9 +47,10 @@ public partial class Program
                 products[i].ForceImpl)
             {
                 count++;
-                manufac = products[i].Manufacturer;
-                if (manufac is not null && manufacturers.ContainsKey(manufac))
-                    products[i] = await manufacturers[manufac].GetProductData(products[i]);
+                if (products[i].manufactuerObject is not null)
+                {   //TODO verify that this won't break
+                    await products[i].manufactuerObject!.GetProductData(products[i]);
+                }
                 else
                 {
                     products[i].Skipped = true;
