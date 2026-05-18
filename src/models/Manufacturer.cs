@@ -143,6 +143,11 @@ public abstract class Manufacturer
                                 string? imgType = Utility.ImageData.GetImageFileType(bytes);
                                 if (bytes.Length < MaxImgSize && imgType is not null)
                                 {
+                                    if (imgType == ".webp")
+                                    {
+                                        bytes = Utility.ImageParsing.ConvertWebpToPng(bytes);
+                                        imgType = ".png";
+                                    }
                                     string imgPath = Path.Combine(path, $"{product.ProductId}_{imageNumber}{imgType}");
                                     await File.WriteAllBytesAsync(imgPath, bytes);
                                     imageNumber++;
