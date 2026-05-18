@@ -21,7 +21,6 @@ public partial class BackendNavigation
         if (page.Url.StartsWith(backend))
             return;
         Console.WriteLine("Loging into backend");
-        await page.PauseAsync();
         var userNameField = page.GetByRole(AriaRole.Textbox, new() { Name = "Login:" });
         await userNameField.ClickAsync();
         await userNameField.FillAsync(userName);
@@ -31,13 +30,19 @@ public partial class BackendNavigation
         await userPassField.FillAsync(userPass);
         await page.GetByText("Zapamiętaj mnie").ClickAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Zaloguj" }).ClickAsync();
+        bool passPl = await page.GetByRole(AriaRole.Button, new() { Name = "Kontynuuj" }).IsVisibleAsync();
+        bool passEn = await page.GetByRole(AriaRole.Button, new() { Name = "Continue" }).IsVisibleAsync();
+        if (passPl)
+            await page.GetByRole(AriaRole.Button, new() { Name = "Kontynuuj" }).ClickAsync();
+        if (passEn)
+            await page.GetByRole(AriaRole.Button, new() { Name = "Continue" }).ClickAsync();
         await page.GotoAsync(backend);
         await page.WaitForLoadStateAsync();
-        if (page.Url.StartsWith(backend))
+        if (!page.Url.StartsWith(backend))
         {
             await page.GotoAsync(backend);
             await page.WaitForLoadStateAsync();
-            if (page.Url.StartsWith(backend))
+            if (!page.Url.StartsWith(backend))
                 throw new Exception("Login failed!");
         }
         Console.WriteLine("Login succesfull");
