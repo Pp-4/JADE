@@ -27,10 +27,9 @@ public partial class BackendNavigation
             await LogIn();
             await page.GotoAsync($"{config.BackendAddress}?indexCatalogue={prodId}");
             await page.Locator("td:nth-child(3)").Filter(new() { HasTextRegex = new Regex($"^{prodId}$") }).First.ClickAsync();
-            await AddDescryption(product);
+            await AddDescription(product);
             await AddImages(prodId);
-            if (await ActivateProduct())
-                product.MarkAsImplemented();
+            product.MarkAsImplemented();
             Console.WriteLine($"Completed");
             return product;
         }
@@ -41,7 +40,7 @@ public partial class BackendNavigation
             throw;
         }
     }
-    async Task AddDescryption(Product product)
+    async Task AddDescription(Product product)
     {
         await page.GetByText("Tłumaczenia").First.ClickAsync();
         await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
@@ -124,10 +123,6 @@ public partial class BackendNavigation
         }
         else
             Console.WriteLine($"No images added");
-    }
-    async Task<bool> ActivateProduct()
-    {
-        return true;
     }
     async Task<string> CheckPresentText(Product product, string alternativeText, bool forceReplace = false)
     {

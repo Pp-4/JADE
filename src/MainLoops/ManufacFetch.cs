@@ -35,7 +35,7 @@ public partial class Program
 
             manufac = products[i].Manufacturer;
             if (manufac is not null && manufacturers.ContainsKey(manufac))
-                products[i].manufactuerObject = manufacturers[manufac];
+                products[i].manufacturerObject = manufacturers[manufac];
 
             //dont look for products that are implemented or void, unless forceImplemented flag is set to 1
             if (!products[i].Implemented &&
@@ -47,9 +47,9 @@ public partial class Program
                 products[i].ForceImpl)
             {
                 count++;
-                if (products[i].manufactuerObject is not null)
+                if (products[i].manufacturerObject is not null)
                 {   //TODO verify that this won't break
-                    await products[i].manufactuerObject!.GetProductData(products[i]);
+                    await products[i].manufacturerObject!.GetProductData(products[i]);
                 }
                 else
                 {

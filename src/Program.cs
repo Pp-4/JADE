@@ -87,7 +87,7 @@ public partial class Program
         await File.WriteAllTextAsync(filePath, serializedProducts);
 
         Console.WriteLine("Exiting");
-        return 1;
+        return 0;
     }
 
 

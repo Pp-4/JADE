@@ -11,6 +11,6 @@ public record Config
     public string BackendUsername { get; init; } = "example username";
     public string BackendPassword { get; init; } = "example password";
     public uint AddingImagesTimeout { get; init; } = 10000;
-    public uint ImageLImit { get; init; } = 3;
+    public uint ImageLimit { get; init; } = 3;
     public string UserAgent { get; init; } = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
 }
