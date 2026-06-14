@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Text.Json;
+using System.Linq;
 using System.IO;
 using System;
 
 using JADE.models;
-using System.Linq;
 
 namespace JADE.Utility;
 
@@ -62,7 +62,7 @@ public static class ResourcesIO
         string content = File.ReadAllText(filePath);
         return content.Split('\n').Where(x => x.First() != '#');
     }
-    public static async Task SaveProductsToFile(List<Product> products, string filePath)
+    public static async Task<bool> SaveProductsToFile(List<Product> products, string filePath)
     {
         if (filePath is not null)
         {
@@ -70,8 +70,39 @@ public static class ResourcesIO
             string content = JsonSerializer.Serialize(products);
             await File.WriteAllTextAsync(filePath, content);
             Console.WriteLine("Product data saved.");
+            return true;
         }
         else
+        {
             Console.WriteLine("Couldn't save product data, missing save file path!");
+            return false;
+        }
+    }
+
+    public static bool GenericSave(object data, string fileName)
+    {
+        Console.WriteLine($"Saving {fileName} ...");
+        try
+        {
+            string content = JsonSerializer.Serialize(data);
+            File.WriteAllText(fileName, content);
+            Console.WriteLine($"{fileName} saved");
+            return true;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Couldn't save {fileName}! Reason: {e.Message}");
+            return false;
+        }
+    }
+    /// <summary>
+    /// Points to file or directory in data dir
+    /// </summary>
+    /// <param name="config"></param>
+    /// <param name="DirOrFile"></param>
+    /// <returns></returns>
+    public static string GetPath(Config config, string DirOrFile)
+    {
+        return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, config.DataDir, DirOrFile));
     }
 }

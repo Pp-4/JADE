@@ -39,14 +39,14 @@ public partial class BackendNavigation
         {
             try
             {   //search by tradeId first
-                await page.GotoAsync($"{config["backend"]}?tradeIndex={urlEncodedId}");
+                await page.GotoAsync($"{config.BackendAddress}?tradeIndex={urlEncodedId}");
                 await page.WaitForLoadStateAsync(Microsoft.Playwright.LoadState.DOMContentLoaded);
                 await page.Locator("td:nth-child(3)").First.ClickAsync(new() { Timeout = 5000 });
                 return SearchBy.TRADEID;
             }
             catch
             {   //if not found, try search by productID
-                await page.GotoAsync($"{config["backend"]}?indexCatalogue={urlEncodedId}");
+                await page.GotoAsync($"{config.BackendAddress}?indexCatalogue={urlEncodedId}");
                 await page.WaitForLoadStateAsync(Microsoft.Playwright.LoadState.DOMContentLoaded);
                 await page.Locator("td:nth-child(3)").First.ClickAsync(new() { Timeout = 5000 });
                 Console.WriteLine("Product was being searching by TradeId, but was found by ProductId, switching further searches");
@@ -57,14 +57,14 @@ public partial class BackendNavigation
         {
             try
             {   //search by productId first
-                await page.GotoAsync($"{config["backend"]}?indexCatalogue={urlEncodedId}");
+                await page.GotoAsync($"{config.BackendAddress}?indexCatalogue={urlEncodedId}");
                 await page.WaitForLoadStateAsync(Microsoft.Playwright.LoadState.DOMContentLoaded);
                 await page.Locator("td:nth-child(3)").First.ClickAsync(new() { Timeout = 5000 });
                 return SearchBy.PRODUCTID;
             }
             catch
             {   //if not found, try search by tradeID
-                await page.GotoAsync($"{config["backend"]}?tradeIndex={urlEncodedId}");
+                await page.GotoAsync($"{config.BackendAddress}?tradeIndex={urlEncodedId}");
                 await page.WaitForLoadStateAsync(Microsoft.Playwright.LoadState.DOMContentLoaded);
                 await page.Locator("td:nth-child(3)").First.ClickAsync(new() { Timeout = 5000 });
                 Console.WriteLine("Product was being searching by ProductId, but was found by TradeId, switching further searches");

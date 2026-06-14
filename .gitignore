@@ -3,26 +3,14 @@
 [Bb]in/
 .nuget/
 
-#exclude browser user data
-playwright-user-data
-
-#exclude temporary files
-src/GetProductData
-src/js
-
-#exclude solution files
-.sln
-.slnx
-
 #exclude all plugins except the example one
-Plugins
+Plugins/
 !Plugins/Example
 
 #exclude ide config
 .vscode
+*.slnx
+*.sln
 
 #exclude user data
-JadeConfig.json
-data
-img
-JADE.slnx
+data/

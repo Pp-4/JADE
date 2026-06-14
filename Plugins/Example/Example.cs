@@ -1,14 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using Microsoft.Extensions.Configuration;
 using Microsoft.Playwright;
 
 using JADE.models;
 
 namespace Plugin.Example;
 
-public class Example(IPage _page, IConfiguration config) : Manufacturer(_page, config)
+public class Example(IPage _page, Config config) : Manufacturer(_page, config)
 {
     //manufacturer's webpage with catalog
     protected override string WebPage => "example.com";

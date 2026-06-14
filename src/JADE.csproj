@@ -14,6 +14,10 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.3" />
     <PackageReference Include="Microsoft.Playwright" Version="1.58.0" />
+    <PackageReference Include="SkiaSharp" Version="3.119.2" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.2" />
+    <PackageReference Include="TickerQ" Version="10.4.0" />
+    <PackageReference Include="TickerQ.Dashboard" Version="10.4.0" />
   </ItemGroup>
   
   <ItemGroup>
@@ -30,21 +34,16 @@
   <!-- Compile main code, then compile plugins against JADE.dll and copy their dlls to Plugin directory  -->
   <Target Name="BuildAndCopyPlugins" AfterTargets="Build">
     <Message Text="Building plugins..." Importance="high" />
-    <MSBuild Projects="@(PluginProjects)" 
-             Targets="Restore;Build" 
-             Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+    <MSBuild Projects="@(PluginProjects)" Targets="Restore;Build" Properties="Configuration=$(Configuration);Platform=$(Platform)" />
     
     <Message Text="Collecting plugin DLLs from: ../Plugins/*/bin/$(Configuration)/net10.0/" Importance="high" />
     <ItemGroup>
-      <PluginDlls Include="../Plugins/*/bin/$(Configuration)/net10.0/*.dll" 
-                   Exclude="../Plugins/*/bin/$(Configuration)/net10.0/JADE.dll" />
+      <PluginDlls Include="../Plugins/*/bin/$(Configuration)/net10.0/*.dll" Exclude="../Plugins/*/bin/$(Configuration)/net10.0/JADE.dll" />
     </ItemGroup>
     
-    <Message Text="Found @(PluginDlls->Count()) plugin DLLs" Importance="high" />
+    <Message Text="Found @(PluginDlls-&gt;Count()) plugin DLLs" Importance="high" />
     <MakeDir Directories="$(OutputPath)plugins" />
-    <Copy SourceFiles="@(PluginDlls)" 
-          DestinationFolder="$(OutputPath)plugins"
-          SkipUnchangedFiles="false" />
+    <Copy SourceFiles="@(PluginDlls)" DestinationFolder="$(OutputPath)plugins" SkipUnchangedFiles="false" />
 
     <Message Text="Copied plugins to: $(OutputPath)plugins" Importance="high" />
   </Target>

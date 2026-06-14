@@ -37,7 +37,7 @@ public partial class Program
         {
             Console.WriteLine($"Critical error {e.Message}");
             Console.WriteLine("Emergency data save and shutdown!");
-            string filePath = Path.Combine(config["data"] ?? "", config["prodData"] ?? "");
+            string filePath = Path.Combine(config.DataDir ?? "", config.SaveFile ?? "");
             var serializedProducts = JsonSerializer.Serialize(products);
             await File.WriteAllTextAsync(filePath, serializedProducts);
             throw;

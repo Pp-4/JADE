@@ -7,7 +7,6 @@ using JADE.models;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Collections.Generic;
 using JADE.Utility;
 
 namespace JADE.Backend;
@@ -17,7 +16,6 @@ public partial class BackendNavigation
     public async Task<Product> FillProductInfo(Product product)
     {
         Console.WriteLine($"Filling information about {product}");
-        string? backend = config["backend"]!;
         string? prodId = product.ProductId;
         if (prodId is null)
         {
@@ -27,7 +25,7 @@ public partial class BackendNavigation
         try
         {
             await LogIn();
-            await page.GotoAsync($"{backend}?indexCatalogue={prodId}");
+            await page.GotoAsync($"{config.BackendAddress}?indexCatalogue={prodId}");
             await page.Locator("td:nth-child(3)").Filter(new() { HasTextRegex = new Regex($"^{prodId}$") }).First.ClickAsync();
             await AddDescryption(product);
             await AddImages(prodId);
@@ -83,12 +81,9 @@ public partial class BackendNavigation
     async Task AddImages(string productId)
     {
         Console.WriteLine("Adding images to product");
-        string imgDir = config["imgDir"] ?? throw new KeyNotFoundException("Missing image directory path!");
         //try to add product images
-        string path = Path.Combine(imgDir, productId);
-
-        int.TryParse(config["addImagesTimeoutMiliseconds"], out int timeout);
-        timeout = timeout < 1000 ? 1000 : 30 * 1000;
+        string dirPath = ResourcesIO.GetPath(config, config.ImgDir);
+        string path = Path.Combine(dirPath, productId);
         string[] localImg = [];
         if (Directory.Exists(path))
             localImg = Directory.GetFiles(path);
@@ -123,7 +118,7 @@ public partial class BackendNavigation
                 await page.GetByRole(AriaRole.Button, new() { Name = "Zapisz" }).ClickAsync(new() { Force = true });
 
                 //wait till confirmation box shows up
-                await page.GetByText("Pomyślnie dodano").ClickAsync(new() { Timeout = timeout });
+                await page.GetByText("Pomyślnie dodano").ClickAsync(new() { Timeout = config.AddingImagesTimeout });
                 Console.WriteLine($"Added {addFiles.Length} images");
             }
         }

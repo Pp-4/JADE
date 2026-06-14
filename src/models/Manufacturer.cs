@@ -7,17 +7,17 @@ using System.Linq;
 using System.IO;
 using System;
 
-using Microsoft.Extensions.Configuration;
 using Microsoft.Playwright;
+using JADE.Utility;
 
 namespace JADE.models;
 
 public abstract class Manufacturer
 {
     protected IPage page;
-    protected IConfiguration config;
+    protected Config config;
 
-    public Manufacturer(IPage _page, IConfiguration _config)
+    public Manufacturer(IPage _page, Config _config)
     {
         page = _page;
         config = _config;
@@ -28,6 +28,7 @@ public abstract class Manufacturer
                 Name = cookie.Item1,
                 Value = cookie.Item2
             };
+            //should the be awaitable ? if yes then how ?
             page.Context.AddCookiesAsync([cook]);
         }
     }
@@ -95,33 +96,33 @@ public abstract class Manufacturer
         // find product images
         try
         {
-            string imgDir = config["imgDir"] ?? throw new KeyNotFoundException("No image directory was specified!");
-            Directory.CreateDirectory(imgDir);
+            Directory.CreateDirectory(config.ImgDir);
             Console.WriteLine("Looking for product images");
             List<string> links = await LocateImages(product);
             if (links.Count == 0)
                 Console.WriteLine($"No images of product found");
             else
             {
-                string path = Path.Combine(imgDir, $"{product.ProductId}/");
+                string dirPath = ResourcesIO.GetPath(config, config.ImgDir);
+                string imgPath = Path.Combine(dirPath, $"{product.ProductId}/");
                 int imageNumber = 0;
                 int localImgCount = 0;
-                if (Directory.Exists(path))
+                if (Directory.Exists(imgPath))
                 {
                     if (product.ForceImpl)
                     {
-                        var files = Directory.GetFiles(path);
+                        var files = Directory.GetFiles(imgPath);
                         foreach (var file in files)
                             File.Delete(file);
                     }
                     else
-                        localImgCount = Directory.GetFiles(path).Length;
+                        localImgCount = Directory.GetFiles(imgPath).Length;
                 }
 
                 if (localImgCount < links.Count)
                 {
-                    Directory.CreateDirectory(path);
-                    localImgCount = Directory.GetFiles(path).Length;
+                    Directory.CreateDirectory(imgPath);
+                    localImgCount = Directory.GetFiles(imgPath).Length;
                     using var client = new HttpClient();
                     foreach ((string, string[]) header in Headers)
                     {
@@ -140,16 +141,16 @@ public abstract class Manufacturer
                             if (!response.IsSuccessStatusCode || size is null || size < MaxImgSize)
                             {
                                 var bytes = await client.GetByteArrayAsync(link);
-                                string? imgType = Utility.ImageData.GetImageFileType(bytes);
+                                string? imgType = ImageData.GetImageFileType(bytes);
                                 if (bytes.Length < MaxImgSize && imgType is not null)
                                 {
                                     if (imgType == ".webp")
                                     {
-                                        bytes = Utility.ImageParsing.ConvertWebpToPng(bytes);
+                                        bytes = ImageParsing.ConvertWebpToPng(bytes);
                                         imgType = ".png";
                                     }
-                                    string imgPath = Path.Combine(path, $"{product.ProductId}_{imageNumber}{imgType}");
-                                    await File.WriteAllBytesAsync(imgPath, bytes);
+                                    string imgagePath = Path.Combine(imgPath, $"{product.ProductId}_{imageNumber}{imgType}");
+                                    await File.WriteAllBytesAsync(imgagePath, bytes);
                                     imageNumber++;
                                 }
                             }
@@ -160,7 +161,7 @@ public abstract class Manufacturer
                         }
                     }
                 }
-                Console.WriteLine($"Found {links.Count} images, saved {imageNumber} of them to {path}");
+                Console.WriteLine($"Found {links.Count} images, saved {imageNumber} of them to {imgPath}");
                 if (imageNumber == 0 && localImgCount != 0)
                     Console.WriteLine($"({localImgCount} image{(localImgCount > 1 ? "s" : "")} already exist{(localImgCount > 1 ? " " : "s")}) ");
                 else if (imageNumber == 0 && localImgCount == 0)

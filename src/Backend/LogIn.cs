@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 
@@ -10,24 +9,17 @@ public partial class BackendNavigation
 {
     public async Task LogIn()
     {
-
-        string? userName = config["Backend:Username"];
-        string? userPass = config["Backend:Password"];
-        string? backend = config["backend"];
-
-        if (backend is null || userName is null || userPass is null)
-            throw new KeyNotFoundException("Missing creditentials!");
-        await page.GotoAsync(backend);
-        if (page.Url.StartsWith(backend))
+        await page.GotoAsync(config.BackendAddress);
+        if (page.Url.StartsWith(config.BackendAddress))
             return;
         Console.WriteLine("Loging into backend");
         var userNameField = page.GetByRole(AriaRole.Textbox, new() { Name = "Login:" });
         await userNameField.ClickAsync();
-        await userNameField.FillAsync(userName);
+        await userNameField.FillAsync(config.BackendUsername);
         await page.GetByRole(AriaRole.Button, new() { Name = "Dalej " }).ClickAsync();
         var userPassField = page.GetByRole(AriaRole.Textbox, new() { Name = "Hasło:" });
         await userPassField.ClickAsync();
-        await userPassField.FillAsync(userPass);
+        await userPassField.FillAsync(config.BackendPassword);
         await page.GetByText("Zapamiętaj mnie").ClickAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Zaloguj" }).ClickAsync();
         bool passPl = await page.GetByRole(AriaRole.Button, new() { Name = "Kontynuuj" }).IsVisibleAsync();
@@ -36,13 +28,13 @@ public partial class BackendNavigation
             await page.GetByRole(AriaRole.Button, new() { Name = "Kontynuuj" }).ClickAsync();
         if (passEn)
             await page.GetByRole(AriaRole.Button, new() { Name = "Continue" }).ClickAsync();
-        await page.GotoAsync(backend);
+        await page.GotoAsync(config.BackendAddress);
         await page.WaitForLoadStateAsync();
-        if (!page.Url.StartsWith(backend))
+        if (!page.Url.StartsWith(config.BackendAddress))
         {
-            await page.GotoAsync(backend);
+            await page.GotoAsync(config.BackendAddress);
             await page.WaitForLoadStateAsync();
-            if (!page.Url.StartsWith(backend))
+            if (!page.Url.StartsWith(config.BackendAddress))
                 throw new Exception("Login failed!");
         }
         Console.WriteLine("Login succesfull");

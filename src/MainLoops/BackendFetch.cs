@@ -15,30 +15,30 @@ public partial class Program
 {
     public static async Task<List<Product>> BackendFetchAsync(BackendNavigation navigate)
     {
-        string? someIdFile = config["newProductsFile"], prodFile = config["productsFile"], directory = config["dataDir"];
+        string oldDataFile = ResourcesIO.GetPath(config, config.SaveFile);
+        string newDataFile = ResourcesIO.GetPath(config, config.InputFile);
         List<Product> products = [];
 
         Console.WriteLine("Begin loading product data");
-        if (prodFile is not null && directory is not null)
+        if (File.Exists(oldDataFile))
         {
-            string filePath = Path.Combine(directory, prodFile);
-            Console.WriteLine($"Loading data form {filePath}");
-            products.AddRange(await ResourcesIO.LoadProductsFromFile(filePath));
+            Console.WriteLine($"Loading data form {oldDataFile}");
+            products.AddRange(await ResourcesIO.LoadProductsFromFile(oldDataFile));
             Console.WriteLine($"Loaded {products.Count} products");
         }
         else
-            Console.WriteLine($"Invalid path dir:{directory} file:{prodFile}");
-        if (someIdFile is not null && directory is not null)
+            Console.WriteLine($"Invalid path: {oldDataFile}");
+
+        if (File.Exists(newDataFile))
         {
-            string filePath = Path.Combine(directory, someIdFile);
             int count = products.Count;
             Console.WriteLine("Loading data from backend service");
-            products.AddRange(ProductsFromSomeIds(ResourcesIO.LoadSomeIDFromFile(filePath)));
+            products.AddRange(ProductsFromSomeIds(ResourcesIO.LoadSomeIDFromFile(newDataFile)));
             Console.WriteLine($"Loaded {products.Count - count} products");
         }
         else
-            Console.WriteLine($"Invalid path dir:{directory} file:{prodFile}");
-        //products = [.. products.DistinctBy(x => x.SomeId).DistinctBy(x => x.ProductId ?? x.SomeId).DistinctBy(x => x.TradeId ?? x.SomeId)];
+            Console.WriteLine($"Invalid path {newDataFile}");
+
         DeDuplicate(ref products);
         products = [.. products.OrderBy(x => x.Manufacturer).ThenBy(x => x.ProductId)];
         Console.WriteLine($"Loading complete, loaded total of {products.Count} products");
@@ -55,7 +55,7 @@ public partial class Program
                 {
                     Console.WriteLine($"Error during reading base info {e.Message}");
                     Console.WriteLine("Emergency data save and shutdown!");
-                    string filePath = Path.Combine(config["data"] ?? "", config["prodData"] ?? "");
+                    string filePath = Path.Combine(config.DataDir, config.SaveFile);
                     var serializedProducts = JsonSerializer.Serialize(products);
                     await File.WriteAllTextAsync(filePath, serializedProducts);
                     throw;

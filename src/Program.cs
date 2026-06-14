@@ -6,33 +6,36 @@ using System.Linq;
 using System.IO;
 using System;
 
+using TickerQ.DependencyInjection;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Playwright;
 
-using JADE.models;
 using JADE.Backend;
+using JADE.Utility;
+using JADE.models;
 
 namespace JADE;
 
 public partial class Program
 {
     static readonly string configFileName = "JadeConfig.json";
-    public static IConfiguration config = new ConfigurationBuilder()
-                                    .AddJsonFile(configFileName, optional: false)
-                                    .AddInMemoryCollection(new Dictionary<string, string?>
-                                    {
-                                        {"browserDir","playwright-user-data"},
-                                        {"imageLImit", "3"}
-                                    })
-                                    .AddUserSecrets<Program>().Build();
-
+    static readonly Config config = GetConfig();
     public static async Task<int> Main(string[] args)
     {
-        Console.WriteLine("Begin initialisation");
+        // var webAppBuilder = WebApplication.CreateBuilder();
+        // webAppBuilder.Services.AddTickerQ();
+        // var webApp = webAppBuilder.Build();
+        // webApp.UseTickerQ();
+        // webApp.Run();
+
+        Console.WriteLine(Environment.GetEnvironmentVariable("APP_DATA_ROOT"));
         using IPlaywright playwright = await Playwright.CreateAsync();
+        Console.WriteLine(AppContext.BaseDirectory);
 
         await using IBrowserContext context = await playwright.Chromium.LaunchPersistentContextAsync
-        (config["browserDir"] ?? throw new KeyNotFoundException(""),
+        (config.BrowserDataDir,
         new()
         {
             Channel = "chromium",
@@ -47,7 +50,7 @@ public partial class Program
                 { "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8" },
                 { "Accept-Language", "pl-PL,en-US,en;q=0.5" },
                 { "Connection", "keep-alive"} },
-            UserAgent = config["userAgent"] ?? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+            UserAgent = config.UserAgent,
 
         });
 
@@ -55,7 +58,7 @@ public partial class Program
         var page = context.Pages.FirstOrDefault() ?? await context.NewPageAsync();
         await page.GotoAsync("about:blank");
         BackendNavigation navigate = new(page, config);
-        string filePath = Path.Combine(config["data"] ?? "", config["prodData"] ?? "");
+        string filePath = ResourcesIO.GetPath(config, config.SaveFile);
 
         var manufacturers = LoadManufacturers(page, config);
 
@@ -95,7 +98,7 @@ public partial class Program
     //two modes
     //1st: default mode, use precompiled units only
     //2nd: work with, separately compiled units
-    public static Dictionary<string, Manufacturer> LoadManufacturers(IPage page, IConfiguration config)
+    public static Dictionary<string, Manufacturer> LoadManufacturers(IPage page, Config config)
     {
         Console.WriteLine("Loading manufacturer assemblies");
 
@@ -146,5 +149,42 @@ public partial class Program
             }
         }
         return manufacturers;
+    }
+
+    public static Config GetConfig()
+    {
+        IConfiguration _config = new ConfigurationBuilder()
+                                           .AddJsonFile(configFileName, optional: true)
+                                           .AddUserSecrets<Program>().Build();
+        Config config = _config.Get<Config>() ?? new();
+        var errors = Validate(config);
+        if (errors.Count() > 0)
+        {
+            foreach (var error in errors)
+                Console.WriteLine(error);
+            Environment.Exit(1);
+        }
+        if (!File.Exists(configFileName))
+        {
+            if (ResourcesIO.GenericSave(config, "JadeConfig.json"))
+                Console.WriteLine("No config file found! Created new example config, exiting.");
+            Environment.Exit(0);
+        }
+        return config;
+    }
+
+    public static IEnumerable<string> Validate(Config config)
+    {
+        if (string.IsNullOrWhiteSpace(config.BackendAddress))
+            yield return $"{nameof(config.BackendAddress)} must be set";
+        else if (!Uri.TryCreate(config.BackendAddress, UriKind.Absolute, out _))
+            yield return $"{nameof(config.BackendAddress)} is not a valid absolute URL";
+
+        if (string.IsNullOrWhiteSpace(config.BackendUsername))
+            yield return $"{nameof(config.BackendUsername)} must be set";
+        if (string.IsNullOrWhiteSpace(config.BackendPassword))
+            yield return $"{nameof(config.BackendPassword)} must be set";
+        if (config.AddingImagesTimeout < 100)
+            yield return $"{nameof(config.AddingImagesTimeout)} must be at least 100 ms";
     }
 }

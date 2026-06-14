@@ -1,8 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
-
 namespace JADE.Utility;
-
 
 public struct ImageFormat(string Name, byte[] Signature, int ByteOffset)
 {

@@ -1,17 +1,17 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.IO;
 using System;
 
 using JADE.models;
-using System.IO;
-using Microsoft.Extensions.Configuration;
+using JADE.Utility;
 
 namespace JADE;
 
 public partial class Program
 {
 
-    public static async Task<List<Product>> ManufacFetchAsync(List<Product> products, Dictionary<string, Manufacturer> manufacturers, IConfiguration config)
+    public static async Task<List<Product>> ManufacFetchAsync(List<Product> products, Dictionary<string, Manufacturer> manufacturers, Config config)
     {
         int count = 0;
         int skipped = 0;
@@ -20,7 +20,6 @@ public partial class Program
 
         string? prodId;
         string? manufac;
-        string imgDir = config["imgDir"]!;
 
         Console.WriteLine("Begin fetching data from manufacturers");
         for (int i = 0; i < products.Count; i++)
@@ -31,19 +30,20 @@ public partial class Program
                 notFound++;
                 continue;
             }
-            string path = Path.Combine(imgDir, prodId);
+            string dirPath = ResourcesIO.GetPath(config, config.ImgDir);
+            string imgPath = Path.Combine(dirPath, prodId);
 
             manufac = products[i].Manufacturer;
             if (manufac is not null && manufacturers.ContainsKey(manufac))
-             products[i].manufactuerObject = manufacturers[manufac]; 
+                products[i].manufactuerObject = manufacturers[manufac];
 
             //dont look for products that are implemented or void, unless forceImplemented flag is set to 1
             if (!products[i].Implemented &&
                 products[i].SkipCount < 3 &&
                 !products[i].VoidProduct && (
                 (products[i].RawDescription?.Count ?? 0) == 0 ||
-                !Directory.Exists(path) ||
-                Directory.GetFiles(path).Length == 0) ||
+                !Directory.Exists(imgPath) ||
+                Directory.GetFiles(imgPath).Length == 0) ||
                 products[i].ForceImpl)
             {
                 count++;
@@ -67,3 +67,5 @@ public partial class Program
         return products;
     }
 }
+
+
