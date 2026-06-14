@@ -14,3 +14,4 @@ Plugins/
 
 #exclude user data
 data/
+*.json
