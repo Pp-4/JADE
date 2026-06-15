@@ -7,7 +7,9 @@ using System.Linq;
 using System.IO;
 using System;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
+
 using JADE.Utility;
 
 namespace JADE.models;
@@ -17,10 +19,13 @@ public abstract class Manufacturer
     protected IPage page;
     protected Config config;
 
-    public Manufacturer(IPage _page, Config _config)
+    protected ILogger logger;
+    public Manufacturer(IPage _page, Config _config, ILogger _logger)
     {
         page = _page;
         config = _config;
+        logger = _logger;
+        
         foreach (var cookie in Cookies)
         {
             var cook = new Cookie
@@ -55,16 +60,16 @@ public abstract class Manufacturer
         try
         {
             if (product.ForceImpl)
-                Console.WriteLine("Forceful reimplementation of a product!");
-            Console.WriteLine($"Fetching {product} data from {WebPage}");
+                logger.LogInformation("Forceful reimplementation of a product!");
+            logger.LogInformation($"Fetching {product} data from {WebPage}");
             if (!page.Url.Contains(WebPage))
                 await page.GotoAsync(WebPage);
             await LocateProduct(product);
-            Console.WriteLine($"Product site located");
+            logger.LogInformation($"Product site located");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error while searching: {ex.Message}");
+            logger.LogError($"Error while searching: {ex.Message}");
             product.Skipped = true;
             product.SkipCount++;
             return product;
@@ -80,14 +85,14 @@ public abstract class Manufacturer
             {
                 parsed = FilterAttributes(parsed);
                 product.RawDescription = parsed;
-                Console.WriteLine($"Found {product.RawDescription.Count} product attributes");
+                logger.LogInformation($"Found {product.RawDescription.Count} product attributes");
             }
             else
-                Console.WriteLine("No product attributes found");
+                logger.LogWarning("No product attributes found");
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Error when trying to get the attributes: {e.Message}");
+            logger.LogError($"Error when trying to get the attributes: {e.Message}");
             product.Skipped = true;
             product.SkipCount++;
             return product;
@@ -97,10 +102,10 @@ public abstract class Manufacturer
         try
         {
             Directory.CreateDirectory(config.ImgDir);
-            Console.WriteLine("Looking for product images");
+            logger.LogInformation("Looking for product images");
             List<string> links = await LocateImages(product);
             if (links.Count == 0)
-                Console.WriteLine($"No images of product found");
+                logger.LogWarning($"No images of product found");
             else
             {
                 string dirPath = ResourcesIO.GetPath(config, config.ImgDir);
@@ -157,20 +162,20 @@ public abstract class Manufacturer
                         }
                         catch (NotSupportedException)
                         {
-                            Console.WriteLine($"Skipping not supported image type");
+                            logger.LogWarning($"Skipping not supported image type");
                         }
                     }
                 }
-                Console.WriteLine($"Found {links.Count} images, saved {imageNumber} of them to {imgPath}");
+                logger.LogInformation($"Found {links.Count} images, saved {imageNumber} of them to {imgPath}");
                 if (imageNumber == 0 && localImgCount != 0)
-                    Console.WriteLine($"({localImgCount} image{(localImgCount > 1 ? "s" : "")} already exist{(localImgCount > 1 ? " " : "s")}) ");
+                    logger.LogInformation($"({localImgCount} image{(localImgCount > 1 ? "s" : "")} already exist{(localImgCount > 1 ? " " : "s")}) ");
                 else if (imageNumber == 0 && localImgCount == 0)
                     product.SkipCount++;
             }
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Error when trying to get the images: {e.Message}");
+            logger.LogError($"Error when trying to get the images: {e.Message}");
             product.Skipped = true;
             product.SkipCount++;
             return product;
@@ -237,7 +242,7 @@ public abstract class Manufacturer
             using var reader = new StreamReader(stream);
             return reader.ReadToEnd();
         }
-        Console.WriteLine($"{name} resource not found!");
+        logger.LogError($"{name} resource not found!");
         return "";
     }
 }

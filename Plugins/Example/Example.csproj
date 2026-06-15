@@ -11,6 +11,7 @@
       <!-- <HintPath>JADE.dll</HintPath> -->
       <Private>false</Private>
     </Reference>
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.3" />
     <PackageReference Include="Microsoft.Playwright" Version="1.58.0">
         <PrivateAssets>all</PrivateAssets>

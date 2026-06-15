@@ -1,17 +1,17 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
-using System;
 
 using JADE.models;
 using JADE.Utility;
+using Microsoft.Extensions.Logging;
 
 namespace JADE;
 
 public partial class Program
 {
 
-    public static async Task<List<Product>> ManufacFetchAsync(List<Product> products, Dictionary<string, Manufacturer> manufacturers, Config config)
+    public static async Task<List<Product>> ManufacFetchAsync(List<Product> products, Dictionary<string, Manufacturer> manufacturers, Config config, ILogger logger)
     {
         int count = 0;
         int skipped = 0;
@@ -21,7 +21,7 @@ public partial class Program
         string? prodId;
         string? manufac;
 
-        Console.WriteLine("Begin fetching data from manufacturers");
+        logger.LogInformation("Begin fetching data from manufacturers");
         for (int i = 0; i < products.Count; i++)
         {
             prodId = products[i].ProductId;
@@ -60,10 +60,10 @@ public partial class Program
             }
             else preFilled++;
         }
-        Console.WriteLine($"Local detail data already exists for {preFilled} products, skipping");
+        logger.LogInformation($"Local detail data already exists for {preFilled} products, skipping");
         if (notFound > 0)
-            Console.WriteLine($"{notFound} product{(notFound > 1 ? "s" : "")} not found");
-        Console.WriteLine($"Fetching complete, fetched {count} and skipped {skipped + preFilled + notFound} products");
+            logger.LogInformation($"{notFound} product{(notFound > 1 ? "s" : "")} not found");
+        logger.LogInformation($"Fetching complete, fetched {count} and skipped {skipped + preFilled + notFound} products");
         return products;
     }
 }

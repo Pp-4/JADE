@@ -8,40 +8,41 @@ using JADE.Backend;
 using JADE.Utility;
 using System.IO;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace JADE;
 
 public partial class Program
 {
-    public static async Task<List<Product>> BackendFetchAsync(BackendNavigation navigate)
+    public static async Task<List<Product>> BackendFetchAsync(BackendNavigation navigate, ILogger logger)
     {
         string oldDataFile = ResourcesIO.GetPath(config, config.SaveFile);
         string newDataFile = ResourcesIO.GetPath(config, config.InputFile);
         List<Product> products = [];
 
-        Console.WriteLine("Begin loading product data");
+        logger.LogInformation("Begin loading product data");
         if (File.Exists(oldDataFile))
         {
-            Console.WriteLine($"Loading data form {oldDataFile}");
-            products.AddRange(await ResourcesIO.LoadProductsFromFile(oldDataFile));
-            Console.WriteLine($"Loaded {products.Count} products");
+            logger.LogInformation($"Loading data form {oldDataFile}");
+            products.AddRange(await ResourcesIO.LoadProductsFromFile(oldDataFile, logger));
+            logger.LogInformation($"Loaded {products.Count} products");
         }
         else
-            Console.WriteLine($"Invalid path: {oldDataFile}");
+            logger.LogError($"Invalid path: {oldDataFile}");
 
         if (File.Exists(newDataFile))
         {
             int count = products.Count;
-            Console.WriteLine("Loading data from backend service");
-            products.AddRange(ProductsFromSomeIds(ResourcesIO.LoadSomeIDFromFile(newDataFile)));
-            Console.WriteLine($"Loaded {products.Count - count} products");
+            logger.LogInformation("Loading data from backend service");
+            products.AddRange(ProductsFromSomeIds(ResourcesIO.LoadSomeIDFromFile(newDataFile, logger)));
+            logger.LogInformation($"Loaded {products.Count - count} products");
         }
         else
-            Console.WriteLine($"Invalid path {newDataFile}");
+            logger.LogError($"Invalid path {newDataFile}");
 
         DeDuplicate(ref products);
         products = [.. products.OrderBy(x => x.Manufacturer).ThenBy(x => x.ProductId)];
-        Console.WriteLine($"Loading complete, loaded total of {products.Count} products");
+        logger.LogInformation($"Loading complete, loaded total of {products.Count} products");
         for (int i = 0; i < products.Count; i++)
         {
             if (!products[i].HasBasicInfo() && !products[i].VoidProduct)
@@ -53,8 +54,8 @@ public partial class Program
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Error during reading base info {e.Message}");
-                    Console.WriteLine("Emergency data save and shutdown!");
+                    logger.LogCritical($"Error during reading base info {e.Message}");
+                    logger.LogCritical("Emergency data save and shutdown!");
                     string filePath = Path.Combine(config.DataDir, config.SaveFile);
                     var serializedProducts = JsonSerializer.Serialize(products);
                     await File.WriteAllTextAsync(filePath, serializedProducts);

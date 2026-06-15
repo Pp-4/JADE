@@ -2,6 +2,8 @@ using System.Threading.Tasks;
 using System.Linq;
 using System;
 
+using Microsoft.Extensions.Logging;
+
 using JADE.models;
 
 namespace JADE.Backend;
@@ -16,15 +18,15 @@ public partial class BackendNavigation
         try
         {
             someId = product.SomeId ?? product.ProductId ?? product.TradeId ?? throw new Exception();
-            Console.WriteLine($"Finding data about {someId}");
+            logger.LogInformation($"Finding data about {someId}");
             searchIdType = await GoToProduct(someId, searchIdType);
             product.MergeProduct(await SelectBestMatch(someId, searchIdType));
-            Console.WriteLine($"Data found: {product}, Manufacturer: {product.Manufacturer}");
+            logger.LogInformation($"Data found: {product}, Manufacturer: {product.Manufacturer}");
             return product;
         }
         catch // product was not found at all
         {
-            Console.WriteLine($"{someId} not found in backend, marking as void");
+            logger.LogWarning($"{someId} not found in backend, marking as void");
             return product.MarkAsVoid();
         }
     }
@@ -49,7 +51,7 @@ public partial class BackendNavigation
                 await page.GotoAsync($"{config.BackendAddress}?indexCatalogue={urlEncodedId}");
                 await page.WaitForLoadStateAsync(Microsoft.Playwright.LoadState.DOMContentLoaded);
                 await page.Locator("td:nth-child(3)").First.ClickAsync(new() { Timeout = 5000 });
-                Console.WriteLine("Product was being searching by TradeId, but was found by ProductId, switching further searches");
+                logger.LogWarning("Product was being searching by TradeId, but was found by ProductId, switching further searches");
                 return SearchBy.PRODUCTID;
             }
         }
@@ -67,7 +69,7 @@ public partial class BackendNavigation
                 await page.GotoAsync($"{config.BackendAddress}?tradeIndex={urlEncodedId}");
                 await page.WaitForLoadStateAsync(Microsoft.Playwright.LoadState.DOMContentLoaded);
                 await page.Locator("td:nth-child(3)").First.ClickAsync(new() { Timeout = 5000 });
-                Console.WriteLine("Product was being searching by ProductId, but was found by TradeId, switching further searches");
+                logger.LogWarning("Product was being searching by ProductId, but was found by TradeId, switching further searches");
                 return SearchBy.TRADEID;
             }
         }

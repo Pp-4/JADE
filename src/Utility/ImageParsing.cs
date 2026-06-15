@@ -1,8 +1,8 @@
 using System;
+
 using SkiaSharp;
 
 namespace JADE.Utility;
-
 
 public static class ImageParsing
 {

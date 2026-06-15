@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using System;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
 namespace JADE.Backend;
@@ -12,7 +13,7 @@ public partial class BackendNavigation
         await page.GotoAsync(config.BackendAddress);
         if (page.Url.StartsWith(config.BackendAddress))
             return;
-        Console.WriteLine("Loging into backend");
+        logger.LogInformation("Loging into backend");
         var userNameField = page.GetByRole(AriaRole.Textbox, new() { Name = "Login:" });
         await userNameField.ClickAsync();
         await userNameField.FillAsync(config.BackendUsername);
@@ -37,6 +38,6 @@ public partial class BackendNavigation
             if (!page.Url.StartsWith(config.BackendAddress))
                 throw new Exception("Login failed!");
         }
-        Console.WriteLine("Login succesfull");
+        logger.LogInformation("Login succesfull");
     }
 }

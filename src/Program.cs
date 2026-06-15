@@ -6,11 +6,12 @@ using System.Linq;
 using System.IO;
 using System;
 
-using TickerQ.DependencyInjection;
-
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
+
+using TickerQ.DependencyInjection;
 
 using JADE.Backend;
 using JADE.Utility;
@@ -21,7 +22,7 @@ namespace JADE;
 public partial class Program
 {
     static readonly string configFileName = "JadeConfig.json";
-    static readonly Config config = GetConfig();
+    static Config config;
     public static async Task<int> Main(string[] args)
     {
         // var webAppBuilder = WebApplication.CreateBuilder();
@@ -30,12 +31,16 @@ public partial class Program
         // webApp.UseTickerQ();
         // webApp.Run();
 
-        Console.WriteLine(Environment.GetEnvironmentVariable("APP_DATA_ROOT"));
+        using var factory = LoggerFactory.Create(x => x.AddConsole().SetMinimumLevel(LogLevel.Debug));
+        ILogger logger = factory.CreateLogger("JADE");
+        logger.LogInformation("Starting initialisation");
+        config = GetConfig(logger);
+
+
         using IPlaywright playwright = await Playwright.CreateAsync();
-        Console.WriteLine(AppContext.BaseDirectory);
 
         await using IBrowserContext context = await playwright.Chromium.LaunchPersistentContextAsync
-        (config.BrowserDataDir,
+        (ResourcesIO.GetPath(config, config.BrowserDataDir),
         new()
         {
             Channel = "chromium",
@@ -57,22 +62,21 @@ public partial class Program
         await context.AddInitScriptAsync(@"Object.defineProperty(navigator, 'webdriver', { get: () => undefined })");
         var page = context.Pages.FirstOrDefault() ?? await context.NewPageAsync();
         await page.GotoAsync("about:blank");
-        BackendNavigation navigate = new(page, config);
+        BackendNavigation navigate = new(page, config, logger);
         string filePath = ResourcesIO.GetPath(config, config.SaveFile);
 
-        var manufacturers = LoadManufacturers(page, config);
+        var manufacturers = LoadManufacturers(page, config, logger);
 
-        Console.WriteLine("Initialisation complete");
-
+        logger.LogInformation("Initialisation complete");
         //Phase 1 - load products from local storage and from backend
-        List<Product> products = await BackendFetchAsync(navigate);
+        List<Product> products = await BackendFetchAsync(navigate, logger);
 
         //Save 1 - save product manufac, tradeId and productId info to local storage
         string serializedProducts = JsonSerializer.Serialize(products);
         await File.WriteAllTextAsync(filePath, serializedProducts);
 
         //Phase 2 - fetch atributes from manufacturers
-        products = await ManufacFetchAsync(products, manufacturers, config);
+        products = await ManufacFetchAsync(products, manufacturers, config, logger);
 
         //Save 2 - save products atributes to local storage
         serializedProducts = JsonSerializer.Serialize(products);
@@ -80,13 +84,13 @@ public partial class Program
 
 
         //Phase 3 - send the product data to backend
-        products = await BackendSaveAsync(products, navigate);
+        products = await BackendSaveAsync(products, navigate, logger);
 
         //Save 3 - save info about which products were implemented to local storage
         serializedProducts = JsonSerializer.Serialize(products);
         await File.WriteAllTextAsync(filePath, serializedProducts);
 
-        Console.WriteLine("Exiting");
+        logger.LogInformation("Exiting");
         return 0;
     }
 
@@ -98,9 +102,9 @@ public partial class Program
     //two modes
     //1st: default mode, use precompiled units only
     //2nd: work with, separately compiled units
-    public static Dictionary<string, Manufacturer> LoadManufacturers(IPage page, Config config)
+    public static Dictionary<string, Manufacturer> LoadManufacturers(IPage page, Config config, ILogger logger)
     {
-        Console.WriteLine("Loading manufacturer assemblies");
+        logger.LogInformation("Loading manufacturer assemblies");
 
         Dictionary<string, Manufacturer> manufacturers = [];
         Type baseType = typeof(Manufacturer);
@@ -129,46 +133,53 @@ public partial class Program
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Failed to load dll file, reason: {e.Message}");
+                    logger.LogError($"Failed to load dll file, reason: {e.Message}");
                 }
             }
         }
         foreach (var type in derivedTypes)
         {
-            var manufac = Activator.CreateInstance(type, [page, config]);
-            if (manufac is Manufacturer)
+            try
             {
-                var prod = manufac as Manufacturer;
-                var names = prod!.Names.Where(x => x != string.Empty && x != "EXAMPLE") ?? [];
-
-                foreach (var name in names)
+                var manufac = Activator.CreateInstance(type, [page, config, logger]);
+                if (manufac is Manufacturer)
                 {
-                    manufacturers.Add(name, prod!);
-                    Console.WriteLine($"Manufacturer {name} assembly loaded");
+                    var prod = manufac as Manufacturer;
+                    var names = prod!.Names.Where(x => x != string.Empty && x != "EXAMPLE") ?? [];
+
+                    foreach (var name in names)
+                    {
+                        manufacturers.Add(name, prod!);
+                        logger.LogInformation($"Manufacturer {name} assembly loaded");
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                logger.LogError($"Manufacturer  assembly  not loaded, reason : {e.Message}");
             }
         }
         return manufacturers;
     }
 
-    public static Config GetConfig()
+    public static Config GetConfig(ILogger logger)
     {
         IConfiguration _config = new ConfigurationBuilder()
                                            .AddJsonFile(configFileName, optional: true)
                                            .AddUserSecrets<Program>().Build();
         Config config = _config.Get<Config>() ?? new();
+        if (!File.Exists(configFileName))
+        {
+            if (ResourcesIO.GenericSave(config, "JadeConfig.json", logger))
+                logger.LogCritical("No config file found! Created new example config, exiting.");
+            Environment.Exit(0);
+        }
         var errors = Validate(config);
         if (errors.Count() > 0)
         {
             foreach (var error in errors)
-                Console.WriteLine(error);
+                logger.LogCritical(error);
             Environment.Exit(1);
-        }
-        if (!File.Exists(configFileName))
-        {
-            if (ResourcesIO.GenericSave(config, "JadeConfig.json"))
-                Console.WriteLine("No config file found! Created new example config, exiting.");
-            Environment.Exit(0);
         }
         return config;
     }

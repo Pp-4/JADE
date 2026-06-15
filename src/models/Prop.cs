@@ -1,5 +1,5 @@
-using System.Data;
 using System.Text.Json.Serialization;
+using System.Data;
 
 namespace JADE.models;
 

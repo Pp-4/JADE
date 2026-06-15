@@ -1,13 +1,14 @@
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Linq;
+using System.IO;
 using System;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
-using JADE.models;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
 using JADE.Utility;
+using JADE.models;
 
 namespace JADE.Backend;
 
@@ -15,11 +16,11 @@ public partial class BackendNavigation
 {
     public async Task<Product> FillProductInfo(Product product)
     {
-        Console.WriteLine($"Filling information about {product}");
+        logger.LogInformation($"Filling information about {product}");
         string? prodId = product.ProductId;
         if (prodId is null)
         {
-            Console.WriteLine($"Product {product} has no id!");
+            logger.LogWarning($"Product {product} has no id!");
             return product;
         }
         try
@@ -30,13 +31,12 @@ public partial class BackendNavigation
             await AddDescription(product);
             await AddImages(prodId);
             product.MarkAsImplemented();
-            Console.WriteLine($"Completed");
+            logger.LogInformation($"Completed");
             return product;
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Couldn't fill the {product} , reason :");
-            Console.WriteLine(e.Message);
+            logger.LogError($"Couldn't fill the {product} , reason :\n{e.Message}");
             throw;
         }
     }
@@ -79,7 +79,7 @@ public partial class BackendNavigation
     }
     async Task AddImages(string productId)
     {
-        Console.WriteLine("Adding images to product");
+        logger.LogInformation("Adding images to product");
         //try to add product images
         string dirPath = ResourcesIO.GetPath(config, config.ImgDir);
         string path = Path.Combine(dirPath, productId);
@@ -118,27 +118,23 @@ public partial class BackendNavigation
 
                 //wait till confirmation box shows up
                 await page.GetByText("Pomyślnie dodano").ClickAsync(new() { Timeout = config.AddingImagesTimeout });
-                Console.WriteLine($"Added {addFiles.Length} images");
+                logger.LogInformation($"Added {addFiles.Length} images");
             }
         }
         else
-            Console.WriteLine($"No images added");
+            logger.LogInformation($"No images added");
     }
     async Task<string> CheckPresentText(Product product, string alternativeText, bool forceReplace = false)
     {
-        //#if DEBUG
-        //Debug.Assert(alternativeText.Contains(product.ShortTradeId));
-        //#endif
-
         if (!forceReplace && (alternativeText.Contains("table") || product.RawDescription?.Count < 1))
         {
-            Console.WriteLine("Preserving previous description");
+            logger.LogInformation("Preserving previous description");
             return alternativeText;
         }
         if (product.ForceImpl)
-            Console.WriteLine("Forced description rewrite");
+            logger.LogInformation("Forced description rewrite");
         else
-            Console.WriteLine("Writing new description");
+            logger.LogInformation("Writing new description");
         return product.Description;
     }
 }

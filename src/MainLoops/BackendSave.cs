@@ -6,17 +6,18 @@ using JADE.models;
 using JADE.Backend;
 using System.Text.Json;
 using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace JADE;
 
 public partial class Program
 {
-    public static async Task<List<Product>> BackendSaveAsync(List<Product> products, BackendNavigation navigate)
+    public static async Task<List<Product>> BackendSaveAsync(List<Product> products, BackendNavigation navigate, ILogger logger)
     {
         int count = 0;
         int skipped = 0;
 
-        Console.WriteLine("Begin saving data to backend");
+        logger.LogInformation("Begin saving data to backend");
         try
         {
             for (int i = 0; i < products.Count; i++)
@@ -35,14 +36,14 @@ public partial class Program
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Critical error {e.Message}");
-            Console.WriteLine("Emergency data save and shutdown!");
+            logger.LogCritical($"Critical error {e.Message}");
+            logger.LogCritical("Emergency data save and shutdown!");
             string filePath = Path.Combine(config.DataDir ?? "", config.SaveFile ?? "");
             var serializedProducts = JsonSerializer.Serialize(products);
             await File.WriteAllTextAsync(filePath, serializedProducts);
             throw;
         }
-        Console.WriteLine($"Saving data completed, saved {count} and skipped {skipped} products");
+        logger.LogInformation($"Saving data completed, saved {count} and skipped {skipped} products");
         return products;
     }
 
