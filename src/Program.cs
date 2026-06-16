@@ -34,7 +34,7 @@ public partial class Program
         using var factory = LoggerFactory.Create(x => x.AddConsole().SetMinimumLevel(LogLevel.Debug));
         ILogger logger = factory.CreateLogger("JADE");
         config = GetConfig(logger);
-        var (usrMsg, sysMsg) = SelectLanguage(Lang.GetAllLanguages(), config.Language, "EN");
+        var (usrMsg, sysMsg) = SelectLanguage(Lang.GetAllLanguages(), config.Language, "PL");
         logger.LogInformation(sysMsg.SysMsg("program-begin-init"));
 
         using IPlaywright playwright = await Playwright.CreateAsync();
@@ -66,8 +66,7 @@ public partial class Program
         string filePath = ResourcesIO.GetPath(config, config.SaveFile);
 
         var manufacturers = LoadManufacturers(page, config, logger);
-
-        logger.LogInformation("Initialisation complete");
+        logger.LogInformation(sysMsg.SysMsg("program-finish-init"));
         //Phase 1 - load products from local storage and from backend
         List<Product> products = await BackendFetchAsync(navigate, logger);
 
@@ -202,7 +201,7 @@ public partial class Program
     public static (Lang usrMsg, Lang sysMsg) SelectLanguage(Dictionary<string, Lang> langs, string textLangCode, string errorLangCode)
     {
         Lang usrMsg = langs.ContainsKey(textLangCode) ? langs[textLangCode] : new Lang(new());
-        Lang sysMsg = langs.ContainsKey(textLangCode) ? langs[errorLangCode] : new Lang(new());
+        Lang sysMsg = langs.ContainsKey(errorLangCode) ? langs[errorLangCode] : new Lang(new());
         return (usrMsg, sysMsg);
     }
 }

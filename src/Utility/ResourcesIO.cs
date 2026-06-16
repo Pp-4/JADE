@@ -107,9 +107,10 @@ public static class ResourcesIO
     {
         return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, config.DataDir, DirOrFile));
     }
-    internal static Dictionary<string, Lang> LoadLangFiles(string path = "LangData")
+    internal static Dictionary<string, Lang> LoadLangFiles(string path = "LangData/")
     {
         Dictionary<string, Lang> languages = [];
+        path = Path.Combine(AppContext.BaseDirectory,path);
         if (Directory.Exists(path))
         {
             var files = Directory.GetFiles(path);

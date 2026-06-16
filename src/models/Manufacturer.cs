@@ -18,24 +18,13 @@ public abstract class Manufacturer
 {
     protected IPage page;
     protected Config config;
-
     protected ILogger logger;
+    bool _areCookiesAdded = false;
     public Manufacturer(IPage _page, Config _config, ILogger _logger)
     {
         page = _page;
         config = _config;
         logger = _logger;
-        
-        foreach (var cookie in Cookies)
-        {
-            var cook = new Cookie
-            {
-                Name = cookie.Item1,
-                Value = cookie.Item2
-            };
-            //should the be awaitable ? if yes then how ?
-            page.Context.AddCookiesAsync([cook]);
-        }
     }
 
     //put here primary name and aliases
@@ -56,7 +45,19 @@ public abstract class Manufacturer
         product.Implemented = false;
         product.VoidProduct = false;
         product.RawDescription = null;
-
+        if (!_areCookiesAdded)
+        {
+            foreach (var cookie in Cookies)
+            {
+                var cook = new Cookie
+                {
+                    Name = cookie.Item1,
+                    Value = cookie.Item2
+                };
+                await page.Context.AddCookiesAsync([cook]);
+            }
+            _areCookiesAdded = true;
+        }
         try
         {
             if (product.ForceImpl)

@@ -3,6 +3,7 @@
     "Code": "EN",
     "SystemMessages": {
         "program-begin-init": "Starting initialisation",
+        "program-finish-init": "Initialisation complete",
         "program-exit-message": "Exiting"
     },
     "UserMessages": {

@@ -3,6 +3,7 @@
     "Code": "PL",
     "SystemMessages": {
         "program-begin-init": "Inicjalizacja programu",
+        "program-finish-init": "Inicjalizacja zakończona",
         "program-exit-message": "Program kończy działanie"
     },
     "UserMessages": {
