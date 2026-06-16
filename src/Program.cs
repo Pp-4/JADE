@@ -22,7 +22,7 @@ namespace JADE;
 public partial class Program
 {
     static readonly string configFileName = "JadeConfig.json";
-    static Config config;
+    static Config config = null!;
     public static async Task<int> Main(string[] args)
     {
         // var webAppBuilder = WebApplication.CreateBuilder();
@@ -33,9 +33,9 @@ public partial class Program
 
         using var factory = LoggerFactory.Create(x => x.AddConsole().SetMinimumLevel(LogLevel.Debug));
         ILogger logger = factory.CreateLogger("JADE");
-        logger.LogInformation("Starting initialisation");
         config = GetConfig(logger);
-
+        var (usrMsg, sysMsg) = SelectLanguage(Lang.GetAllLanguages(), config.Language, "EN");
+        logger.LogInformation(sysMsg.SysMsg("program-begin-init"));
 
         using IPlaywright playwright = await Playwright.CreateAsync();
 
@@ -62,7 +62,7 @@ public partial class Program
         await context.AddInitScriptAsync(@"Object.defineProperty(navigator, 'webdriver', { get: () => undefined })");
         var page = context.Pages.FirstOrDefault() ?? await context.NewPageAsync();
         await page.GotoAsync("about:blank");
-        BackendNavigation navigate = new(page, config, logger);
+        BackendNavigation navigate = new(page, config, logger, usrMsg);
         string filePath = ResourcesIO.GetPath(config, config.SaveFile);
 
         var manufacturers = LoadManufacturers(page, config, logger);
@@ -90,7 +90,7 @@ public partial class Program
         serializedProducts = JsonSerializer.Serialize(products);
         await File.WriteAllTextAsync(filePath, serializedProducts);
 
-        logger.LogInformation("Exiting");
+        logger.LogInformation(sysMsg.SysMsg("program-exit-message"));
         return 0;
     }
 
@@ -197,5 +197,12 @@ public partial class Program
             yield return $"{nameof(config.BackendPassword)} must be set";
         if (config.AddingImagesTimeout < 100)
             yield return $"{nameof(config.AddingImagesTimeout)} must be at least 100 ms";
+    }
+    //Return one language for user visible strings, and one for program logs
+    public static (Lang usrMsg, Lang sysMsg) SelectLanguage(Dictionary<string, Lang> langs, string textLangCode, string errorLangCode)
+    {
+        Lang usrMsg = langs.ContainsKey(textLangCode) ? langs[textLangCode] : new Lang(new());
+        Lang sysMsg = langs.ContainsKey(textLangCode) ? langs[errorLangCode] : new Lang(new());
+        return (usrMsg, sysMsg);
     }
 }

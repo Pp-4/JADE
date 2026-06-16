@@ -1,7 +1,13 @@
 {
-    "Name": "Deutsch",
-    "Errors": {},
-    "Texts": {
-        "TradeIndex": "Handelsindex"
+    "Name": "Deutsch - wip",
+    "Code": "DE",
+    "SystemMessages": {
+        "program-begin-init": "Initialisierung wird gestartet",
+        "program-exit-message": "Beenden"
+    },
+    "UserMessages": {
+
+        "trade-index": "Handelsindex",
+        "product-description-label": "Produktbeschreibung"
     }
 }

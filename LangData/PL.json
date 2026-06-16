@@ -1,7 +1,12 @@
 {
-    "Name": "Polski",
-    "Errors": {},
-    "Texts": {
-        "TradeIndex": "Indeks handlowy"
+    "Name": "Polski - wip",
+    "Code": "PL",
+    "SystemMessages": {
+        "program-begin-init": "Inicjalizacja programu",
+        "program-exit-message": "Program kończy działanie"
+    },
+    "UserMessages": {
+        "trade-index": "Indeks handlowy",
+        "product-description-label": "Opis"
     }
 }

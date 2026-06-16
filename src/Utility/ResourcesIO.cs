@@ -107,4 +107,21 @@ public static class ResourcesIO
     {
         return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, config.DataDir, DirOrFile));
     }
+    internal static Dictionary<string, Lang> LoadLangFiles(string path = "LangData")
+    {
+        Dictionary<string, Lang> languages = [];
+        if (Directory.Exists(path))
+        {
+            var files = Directory.GetFiles(path);
+            foreach (var file in files)
+            {
+                var binary = File.ReadAllBytes(file);
+                var lang = JsonSerializer.Deserialize<LangRecord>(binary) ?? new LangRecord();
+                languages.TryAdd(lang.Code, new(lang));
+            }
+        }
+        if (languages.Keys.Count < 1)
+            languages.Add("default", new Lang(new LangRecord()));
+        return languages;
+    }
 }

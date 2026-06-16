@@ -16,8 +16,6 @@ public class Product(string? someid)
     public string? ProductId { get; set; }
     //Initial id obtained during Phase 1
     public string? SomeId { get; set; } = someid;
-    [JsonIgnore]
-    public string Description { get { return HtmlRendering.WrapDescriptionInHtml(this); } }
     public List<Prop>? RawDescription { get; set; }
     //product manufacturer
     public string? Manufacturer { get; set; }

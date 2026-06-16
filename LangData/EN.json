@@ -1,7 +1,12 @@
 {
-    "Name": "English",
-    "Errors": {},
-    "Texts": {
-        "TradeIndex": "Trade index"
+    "Name": "English - wip",
+    "Code": "EN",
+    "SystemMessages": {
+        "program-begin-init": "Starting initialisation",
+        "program-exit-message": "Exiting"
+    },
+    "UserMessages": {
+        "trade-index": "Trade index",
+        "product-description-label": "Description"
     }
 }

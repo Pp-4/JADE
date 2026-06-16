@@ -135,6 +135,6 @@ public partial class BackendNavigation
             logger.LogInformation("Forced description rewrite");
         else
             logger.LogInformation("Writing new description");
-        return product.Description;
+        return HtmlRendering.WrapDescriptionInHtml(product, lang);
     }
 }

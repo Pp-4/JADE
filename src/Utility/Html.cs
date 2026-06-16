@@ -6,16 +6,16 @@ namespace JADE.Utility;
 
 public static class HtmlRendering
 {
-    public static string WrapDescriptionInHtml(Product product)
+    public static string WrapDescriptionInHtml(Product product, Lang lang)
     {
         if (product.RawDescription is null)
             return string.Empty;
         else
         {
-            string ret = "<div class=\"opis_na_stronie_produktu-tabela\"><div class=\"tytul\">Opis</div><table>\n";
-            if (!product.RawDescription.Any(x => x.Key == " Indeks handlowy"))
+            string ret = $"<div class=\"opis_na_stronie_produktu-tabela\"><div class=\"tytul\">{lang.UsrMsg("product-description-label")}</div><table>\n";
+            if (!product.RawDescription.Any(x => x.Key == $" {lang.UsrMsg("trade-index")}"))
             {
-                ret += $"<tr><td>Indeks handlowy </td><td><b>{product.TradeId}</b></td></tr>\n";
+                ret += $"<tr><td>{lang.UsrMsg("trade-index")} </td><td><b>{product.TradeId}</b></td></tr>\n";
             }
             foreach (var item in product.RawDescription)
             {
