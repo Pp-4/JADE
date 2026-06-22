@@ -10,14 +10,14 @@ using Microsoft.Extensions.Logging;
 
 namespace JADE;
 
-public partial class Program
+public partial class Jade
 {
-    public static async Task<List<Product>> BackendSaveAsync(List<Product> products, BackendNavigation navigate, ILogger logger)
+    public async Task<List<Product>> BackendSaveAsync(List<Product> products, BackendNavigation navigate)
     {
         int count = 0;
         int skipped = 0;
 
-        logger.LogInformation("Begin saving data to backend");
+        Logger.LogInformation("Begin saving data to backend");
         try
         {
             for (int i = 0; i < products.Count; i++)
@@ -36,14 +36,14 @@ public partial class Program
         }
         catch (Exception e)
         {
-            logger.LogCritical($"Critical error {e.Message}");
-            logger.LogCritical("Emergency data save and shutdown!");
-            string filePath = Path.Combine(config.DataDir ?? "", config.SaveFile ?? "");
+            Logger.LogCritical($"Critical error {e.Message}");
+            Logger.LogCritical("Emergency data save and shutdown!");
+            string filePath = Path.Combine(Config.DataDir ?? "", Config.SaveFile ?? "");
             var serializedProducts = JsonSerializer.Serialize(products);
             await File.WriteAllTextAsync(filePath, serializedProducts);
             throw;
         }
-        logger.LogInformation($"Saving data completed, saved {count} and skipped {skipped} products");
+        Logger.LogInformation($"Saving data completed, saved {count} and skipped {skipped} products");
         return products;
     }
 

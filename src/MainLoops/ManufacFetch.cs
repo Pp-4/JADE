@@ -8,10 +8,10 @@ using Microsoft.Extensions.Logging;
 
 namespace JADE;
 
-public partial class Program
+public partial class Jade
 {
 
-    public static async Task<List<Product>> ManufacFetchAsync(List<Product> products, Dictionary<string, Manufacturer> manufacturers, Config config, ILogger logger)
+    public async Task<List<Product>> ManufacFetchAsync(List<Product> products, Dictionary<string, Manufacturer> manufacturers)
     {
         int count = 0;
         int skipped = 0;
@@ -21,7 +21,7 @@ public partial class Program
         string? prodId;
         string? manufac;
 
-        logger.LogInformation("Begin fetching data from manufacturers");
+        Logger.LogInformation("Begin fetching data from manufacturers");
         for (int i = 0; i < products.Count; i++)
         {
             prodId = products[i].ProductId;
@@ -30,7 +30,7 @@ public partial class Program
                 notFound++;
                 continue;
             }
-            string dirPath = ResourcesIO.GetPath(config, config.ImgDir);
+            string dirPath = ResourcesIO.GetPath(Config, Config.ImgDir);
             string imgPath = Path.Combine(dirPath, prodId);
 
             manufac = products[i].Manufacturer;
@@ -60,10 +60,10 @@ public partial class Program
             }
             else preFilled++;
         }
-        logger.LogInformation($"Local detail data already exists for {preFilled} products, skipping");
+        Logger.LogInformation($"Local detail data already exists for {preFilled} products, skipping");
         if (notFound > 0)
-            logger.LogInformation($"{notFound} product{(notFound > 1 ? "s" : "")} not found");
-        logger.LogInformation($"Fetching complete, fetched {count} and skipped {skipped + preFilled + notFound} products");
+            Logger.LogInformation($"{notFound} product{(notFound > 1 ? "s" : "")} not found");
+        Logger.LogInformation($"Fetching complete, fetched {count} and skipped {skipped + preFilled + notFound} products");
         return products;
     }
 }
