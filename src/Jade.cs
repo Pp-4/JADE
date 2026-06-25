@@ -26,7 +26,7 @@ namespace JADE;
 public partial class Jade
 {
     const string configFileName = "JadeConfig.json";
-    readonly Config Config;
+    public readonly Config Config;
     readonly ILogger Logger;
     readonly Lang usrMsg;
     readonly Lang sysMsg;
@@ -170,7 +170,8 @@ public partial class Jade
                 Logger.LogCritical("No config file found! Created new example config, exiting.");
             Environment.Exit(0);
         }
-        var errors = Validate();
+        //explicitly give config to Validate function, since global config object was not setup(not returned) yet
+        var errors = Validate(config);
         if (errors.Count() > 0)
         {
             foreach (var error in errors)
@@ -180,19 +181,19 @@ public partial class Jade
         return config;
     }
 
-    public IEnumerable<string> Validate()
+    static IEnumerable<string> Validate(Config config)
     {
-        if (string.IsNullOrWhiteSpace(Config.BackendAddress))
-            yield return $"{nameof(Config.BackendAddress)} must be set";
-        else if (!Uri.TryCreate(Config.BackendAddress, UriKind.Absolute, out _))
-            yield return $"{nameof(Config.BackendAddress)} is not a valid absolute URL";
+        if (string.IsNullOrWhiteSpace(config.BackendAddress))
+            yield return $"{nameof(config.BackendAddress)} must be set";
+        else if (!Uri.TryCreate(config.BackendAddress, UriKind.Absolute, out _))
+            yield return $"{nameof(config.BackendAddress)} is not a valid absolute URL";
 
-        if (string.IsNullOrWhiteSpace(Config.BackendUsername))
-            yield return $"{nameof(Config.BackendUsername)} must be set";
-        if (string.IsNullOrWhiteSpace(Config.BackendPassword))
-            yield return $"{nameof(Config.BackendPassword)} must be set";
-        if (Config.AddingImagesTimeout < 100)
-            yield return $"{nameof(Config.AddingImagesTimeout)} must be at least 100 ms";
+        if (string.IsNullOrWhiteSpace(config.BackendUsername))
+            yield return $"{nameof(config.BackendUsername)} must be set";
+        if (string.IsNullOrWhiteSpace(config.BackendPassword))
+            yield return $"{nameof(config.BackendPassword)} must be set";
+        if (config.AddingImagesTimeout < 100)
+            yield return $"{nameof(config.AddingImagesTimeout)} must be at least 100 ms";
     }
     //Return one language for user visible strings, and one for program logs
     public static (Lang usrMsg, Lang sysMsg) SelectLanguage(Dictionary<string, Lang> langs, string textLangCode, string errorLangCode)

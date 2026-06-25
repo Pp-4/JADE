@@ -1,4 +1,6 @@
 ﻿using System.Threading.Tasks;
+using JADE.Learning;
+using JADE.models;
 
 namespace JADE;
 
@@ -7,7 +9,22 @@ public partial class Program
     public static async Task<int> Main(string[] args)
     {
         Jade program = new();
-        await program.Start();
+        using JadeDbContext context = new(program.Config);
+
+        Learning.Product pizza = new()
+        {
+            Name = "Pizza Vegg",
+            Price = 12,
+        };
+        Learning.Product meatzza = new()
+        {
+            Name = "Pizza Meat",
+            Price = 13,
+        };
+        context.Add(pizza);
+        context.Add(meatzza);
+        context.SaveChanges();
+        //await program.Start();
         return 0;
     }
 

@@ -7,6 +7,7 @@ public record Config
     public string DataDir { get; init; } = "data/";
     public string ImgDir { get; init; } = "img/";
     public string BrowserDataDir { get; init; } = "playwright-user-data/";
+    public string DbConnectionString { get; set; } = "database.db";
     public string BackendAddress { get; init; } = "";
     public string BackendUsername { get; init; } = "";
     public string BackendPassword { get; init; } = "";
