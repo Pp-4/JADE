@@ -43,7 +43,7 @@ public abstract class Manufacturer
     {
         product.Skipped = false;
         product.Implemented = false;
-        product.VoidProduct = false;
+        product.Void = false;
         product.RawDescription = null;
         if (!_areCookiesAdded)
         {

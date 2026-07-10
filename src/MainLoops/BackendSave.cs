@@ -24,7 +24,7 @@ public partial class Jade
             {
                 if (!products[i].Implemented &&
                     !products[i].Skipped &&
-                    !products[i].VoidProduct &&
+                    !products[i].Void &&
                     products[i].RawDescription?.Count > 0 ||
                     products[i].ForceImpl)
                 {

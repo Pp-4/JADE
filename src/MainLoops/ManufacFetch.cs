@@ -25,7 +25,7 @@ public partial class Jade
         for (int i = 0; i < products.Count; i++)
         {
             prodId = products[i].ProductId;
-            if (products[i].VoidProduct || prodId is null)
+            if (products[i].Void || prodId is null)
             {//skip products that were not found during initial backend fetch
                 notFound++;
                 continue;
@@ -40,7 +40,7 @@ public partial class Jade
             //dont look for products that are implemented or void, unless forceImplemented flag is set to 1
             if (!products[i].Implemented &&
                 products[i].SkipCount < 3 &&
-                !products[i].VoidProduct && (
+                !products[i].Void && (
                 (products[i].RawDescription?.Count ?? 0) == 0 ||
                 !Directory.Exists(imgPath) ||
                 Directory.GetFiles(imgPath).Length == 0) ||

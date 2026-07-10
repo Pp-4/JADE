@@ -1,4 +1,5 @@
-using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,39 +7,36 @@ using System;
 
 using JADE.RegularEx;
 
+
 namespace JADE.models;
 
-public class Product(string? someid)
+public class Product
 {
-#nullable enable
+    public Product(string ProductId) => this.ProductId = ProductId;
+
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
+    public string ProductId { get; set; } = null!;
+    public List<Prop> RawDescription { get; set; } = [];
+    [ForeignKey("Manufactrurer")]
     public string? TradeId { get; set; }
-    public string? ProductId { get; set; }
-    //Initial id obtained during Phase 1
-    public string? SomeId { get; set; } = someid;
-    public List<Prop>? RawDescription { get; set; }
-    //product manufacturer
-    public string? Manufacturer { get; set; }
-    [JsonIgnore]
-    public Manufacturer? manufacturerObject;
-    //cleaned up version of tradeId
-    public string? ShortTradeId { get { return GenerateShortTradeId(); } }
-    //was product skipped at any loop
-    public bool Skipped { get; set; }
-    //how many times was product skipped
-    public int SkipCount { get; set; } = 0;
+    public int ManufactrurerId { get; set; } = 0;
+    public int SkipCount { get; set; } = 0;         //how many times was product skipped
+    public bool Skipped { get; set; } = false;      //was product skipped at any loop
+    public bool Implemented { get; set; } = false;  //was product data saved back to backend ?
+    public bool Void { get; set; } = false;         //flag product as not found in backend
+    public bool ForceImpl { get; set; } = false;    //force reimplemntation flag (ignores Implemented flag, only set for testing on invidual products, rewrites backend description)
 
-    //was product data saved back to backend ?
-    public bool Implemented { get; set; }
+    [NotMapped]
+    public Manufacturer? manufacturerObject { get; set; }
+    [NotMapped]
+    public string? ShortTradeId => GenerateShortTradeId();
 
-    //flag product as not found in backend
-    public bool VoidProduct { get; set; }
-    //force reimplemntation flag (ignores Implemented flag, only set for testing on invidual products)
-    //it will also overwite the description every time
-    public bool ForceImpl { get; set; } = false;
-    public override string ToString()
-    {
-        return $"{ProductId} / {TradeId}";
-    }
+    public string Manufacturer { get; set; } = "unknown";
+    public override string ToString() => $"{ProductId} / {TradeId}";
+    public override bool Equals(object? obj) => obj is Product other && other.ProductId == ProductId;
+    public override int GetHashCode() => ProductId.GetHashCode();
+
     private string GenerateShortTradeId()
     {
         if (TradeId is not null)
@@ -55,66 +53,22 @@ public class Product(string? someid)
         }
         return "";
     }
-    public bool Equals(Product? other)
-    {
-        if (ReferenceEquals(this, other))
-            return true;
-        if (other is null)
-            return false;
-        if (this.SomeId is not null && other.SomeId is not null)
-            return this.SomeId == other.SomeId;
-        if (this.SomeId is null && other.SomeId is null)
-            return this.ProductId == other.ProductId;
-        if (this.SomeId is null && other.SomeId is not null)
-            return this.ProductId == other.SomeId || this.TradeId == other.SomeId || this.ShortTradeId == other.SomeId;
-        return this.SomeId == other.ProductId || this.SomeId == other.TradeId || this.SomeId == other.ShortTradeId;
-    }
 
     public Product MarkAsImplemented()
     {
         this.SkipCount = 0;
         this.Skipped = false;
         this.Implemented = true;
-        this.VoidProduct = false;
+        this.Void = false;
         return this;
     }
     public Product MarkAsVoid()
     {
         this.Skipped = true;
-        this.VoidProduct = true;
+        this.Void = true;
         this.Implemented = false;
-        this.Manufacturer = null;
-        this.ProductId = null;
+        this.ManufactrurerId = 0;
         this.TradeId = null;
         return this;
     }
-    public Product Resolve(string ProductId, string TradeId, string Manufacturer)
-    {
-        this.ProductId = ProductId;
-        this.TradeId = TradeId;
-        this.Manufacturer = Manufacturer;
-        this.Implemented = false;
-        this.VoidProduct = false;
-        this.SomeId = null;
-        return this;
-    }
-    public Product MergeProduct(Product other)
-    {
-        this.SomeId ??= other.SomeId;
-        this.ProductId ??= other.ProductId;
-        this.TradeId ??= other.TradeId;
-        this.Manufacturer ??= other.Manufacturer;
-        this.manufacturerObject ??= other.manufacturerObject;
-        this.RawDescription ??= other.RawDescription;
-        this.ForceImpl |= other.ForceImpl;
-        this.VoidProduct |= other.VoidProduct;
-        this.Implemented |= other.Implemented;
-        this.Skipped |= other.Skipped;
-        this.SkipCount = this.SkipCount > other.SkipCount ? this.SkipCount : other.SkipCount;
-        if (this.ProductId is not null) this.SomeId = null;
-        return this;
-    }
-    public bool HasBasicInfo() => !(string.IsNullOrEmpty(ProductId)
-                                || string.IsNullOrEmpty(TradeId)
-                                || string.IsNullOrEmpty(Manufacturer));
 }

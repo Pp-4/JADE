@@ -5,7 +5,6 @@ using System;
 
 using JADE.models;
 using JADE.Backend;
-using JADE.Utility;
 using System.IO;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
@@ -20,7 +19,7 @@ public partial class Jade
         Logger.LogInformation($"Loading complete, loaded total of {products.Count} products");
         for (int i = 0; i < products.Count; i++)
         {
-            if (!products[i].HasBasicInfo() && !products[i].VoidProduct)
+            if (!products[i].Void)
             {
                 try
                 {

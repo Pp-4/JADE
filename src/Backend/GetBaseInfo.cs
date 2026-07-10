@@ -5,6 +5,7 @@ using System;
 using Microsoft.Extensions.Logging;
 
 using JADE.models;
+using System.Data;
 
 namespace JADE.Backend;
 
@@ -17,10 +18,10 @@ public partial class BackendNavigation
         await LogIn();
         try
         {
-            someId = product.SomeId ?? product.ProductId ?? product.TradeId ?? throw new Exception();
+            someId = product.ProductId ?? product.TradeId ?? throw new Exception();
             logger.LogInformation($"Finding data about {someId}");
             searchIdType = await GoToProduct(someId, searchIdType);
-            product.MergeProduct(await SelectBestMatch(someId, searchIdType));
+            product = await SelectBestMatch(someId, searchIdType);
             logger.LogInformation($"Data found: {product}, Manufacturer: {product.Manufacturer}");
             return product;
         }
@@ -81,7 +82,7 @@ public partial class BackendNavigation
         var products = page.Locator("#products-grid .k-table-tbody > tr > :nth-child(2)");
         int count = await products.CountAsync();
         double bestScore = 0;
-        Product product = new(null);
+        Product? product = null;
         for (int i = 0; i < count; i++)
         {
             var element = products.Nth(i);
@@ -107,9 +108,13 @@ public partial class BackendNavigation
             if (tempScore > bestScore)
             {
                 bestScore = tempScore;
-                product.Resolve(productId, tradeId, manufacturer);
+                product = new(productId)
+                {
+                    TradeId = tradeId,
+                    Manufacturer = manufacturer
+                };
             }
         }
-        return product;
+        return product ?? throw new NoNullAllowedException("Somehow multiple-choice of a product resulted in null product being chosen");
     }
 }

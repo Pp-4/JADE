@@ -37,28 +37,31 @@ class DbWorkflows(Config config, ILogger logger)
         else
             Logger.LogError($"Invalid path {newIdsLocation}");
     }
-    public async Task<List<JADE.Learning.Product>> LoadProductsFromDb()
+    public async Task<List<Product>> LoadProductsFromDb()
     {
         using JadeDbContext context = new(config);
-        List<JADE.Learning.Product> products = [];
+        List<Product> products = [];
 
         Logger.LogInformation("Begin loading product data from db");
         products.AddRange(await context.Products.ToListAsync());
         Logger.LogInformation($"Loaded {products.Count} products");
         return products;
     }
-    public async Task SaveProductsToDb(List<JADE.Learning.Product> products)
+    public async Task SaveProductsToDb(List<Product> products)
     {
         using JadeDbContext context = new(config);
 
         Logger.LogInformation("Saving product data to db");
         try
         {
-            foreach(var product in products)
+            foreach (var product in products)
             {
-                //todo - implement upsert operation
+                var exists = await context.Products.AnyAsync(p => p.ProductId == product.ProductId);
+                if (exists)
+                    context.Products.Update(product);
+                else
+                    await context.Products.AddAsync(product);
             }
-            await context.Products.AddRangeAsync(products);
             context.SaveChanges();
         }
         catch (Exception e)
@@ -69,58 +72,20 @@ class DbWorkflows(Config config, ILogger logger)
         }
         Logger.LogInformation($"Saved {products.Count} products");
     }
-    public async Task<List<JADE.Learning.Product>> LoadProductsFromJson()
+    public async Task<List<Product>> LoadProductsFromJson()
     {
-        List<JADE.models.Product> products = [];
+        List<Product> products = [];
         string productsFile = ResourcesIO.GetPath(config, config.SaveFile);
 
         Logger.LogInformation("Begin loading product data");
         if (File.Exists(productsFile))
         {
             Logger.LogInformation($"Loading data form {productsFile}");
-            products = await ResourcesIO.LoadProductsFromFile<JADE.models.Product>(productsFile, Logger);
+            products = await ResourcesIO.LoadProductsFromFile<Product>(productsFile, Logger);
             Logger.LogInformation($"Loaded {products.Count} products");
         }
         else
             Logger.LogError($"Invalid path: {productsFile}");
-        return [.. MapToNew(products)];
-    }
-    IEnumerable<JADE.Learning.Product> MapToNew(IEnumerable<JADE.models.Product> oldTypes)
-    {
-        List<JADE.Learning.Product> newTypes = [];
-        using JadeDbContext context = new(config);
-        foreach (var oldProduct in oldTypes)
-        {
-            if (oldProduct.ProductId is null)
-                continue;
-            JADE.Learning.Product product = new()
-            {
-                Description = JsonSerializer.Serialize(oldProduct.RawDescription),
-                RawDescription = oldProduct.RawDescription,
-                ProductId = oldProduct.ProductId,
-                TradeId = oldProduct.TradeId,
-                Implemented = oldProduct.Implemented,
-                ForceImpl = oldProduct.ForceImpl,
-                Skipped = oldProduct.Skipped,
-                Void = oldProduct.VoidProduct
-            };
-            var res = context.Manufactrurers.Where(x => x.Name == oldProduct.Manufacturer).ToList();
-            if (res.Count == 0)
-            {
-                JADE.Learning.Manufactrurer manufactrurer = new()
-                {
-                    Name = oldProduct.Manufacturer ?? "unknown",
-                    WebAddres = "unknown"                    
-                };
-                context.Manufactrurers.Add(manufactrurer);
-                context.SaveChanges();
-                product.ManufactrurerId = context.Manufactrurers.OrderBy(x => x.Id).Last().Id;
-            }
-            else
-                product.ManufactrurerId = res[0].Id;
-
-            newTypes.Add(product);
-        }
-        return newTypes;
+        return products;
     }
 }

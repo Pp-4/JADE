@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
+using JADE.models;
 
 namespace JADE.Learning;
 
