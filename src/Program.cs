@@ -1,6 +1,15 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Threading.Tasks;
 using JADE.Learning;
 using JADE.models;
+using JADE.Utility;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Logging;
 
 namespace JADE;
 
@@ -10,24 +19,13 @@ public partial class Program
     {
         Jade program = new();
         using JadeDbContext context = new(program.Config);
-
-        Learning.Product pizza = new()
-        {
-            Name = "Pizza Vegg",
-            Price = 12,
-        };
-        Learning.Product meatzza = new()
-        {
-            Name = "Pizza Meat",
-            Price = 13,
-        };
-        context.Add(pizza);
-        context.Add(meatzza);
-        context.SaveChanges();
+        DbWorkflows dbWorkflows = new(program.Config, program.Logger);
+        var list = await dbWorkflows.LoadProductsFromJson();
+        await dbWorkflows.SaveProductsToDb(list);
         //await program.Start();
+
         return 0;
     }
-
     // public void test()
     // {
     // var webAppBuilder = WebApplication.CreateBuilder();

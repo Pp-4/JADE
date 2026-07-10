@@ -29,9 +29,9 @@ public static class ResourcesIO
         }
         else throw new FileNotFoundException($"{name} resource not found!");
     }
-    public static async Task<List<Product>> LoadProductsFromFile(string filePath, ILogger logger)
+    public static async Task<List<T>> LoadProductsFromFile<T>(string filePath, ILogger logger)
     {
-        List<Product> products = [];
+        List<T> products = [];
 
         //string filePath = Path.Combine(dataPath, dataStorageLocation);
         if (File.Exists(filePath))
@@ -42,7 +42,7 @@ public static class ResourcesIO
                 return products;
             try
             {
-                var deserialized = JsonSerializer.Deserialize<IEnumerable<Product>>(jsonContent);
+                var deserialized = JsonSerializer.Deserialize<IEnumerable<T>>(jsonContent);
                 if (deserialized is not null)
                     products.AddRange(deserialized);
                 else
@@ -54,17 +54,19 @@ public static class ResourcesIO
                 return products;
             }
         }
+        
         else
             logger.LogError("Couldn't load product data, missing save file path!");
         return products;
     }
+    
     public static IEnumerable<string> LoadSomeIDFromFile(string filePath, ILogger logger)
     {
         logger.LogInformation($"Loading data from {filePath}");
         string content = File.ReadAllText(filePath);
         return content.Split('\n').Where(x => x.First() != '#');
     }
-    public static async Task<bool> SaveProductsToFile(List<Product> products, string filePath, ILogger logger)
+    public static async Task<bool> SaveProductsToFile<T>(List<T> products, string filePath, ILogger logger)
     {
         if (filePath is not null)
         {

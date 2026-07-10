@@ -27,7 +27,7 @@ public partial class Jade
 {
     const string configFileName = "JadeConfig.json";
     public readonly Config Config;
-    readonly ILogger Logger;
+    public readonly ILogger Logger;
     readonly Lang usrMsg;
     readonly Lang sysMsg;
     public Jade()
@@ -69,12 +69,13 @@ public partial class Jade
 
         var manufacturers = LoadManufacturers(page);
         Logger.LogInformation(sysMsg.SysMsg("program-finish-init"));
-        
+
         string filePath = ResourcesIO.GetPath(Config, Config.SaveFile);
 
         //Phase 1 - load products from local storage and from backend
         await page.GotoAsync("about:blank");
-        List<Product> products = await BackendFetchAsync(navigate);
+        //todo - hydrate product list using new classes, then pass that list to fetch phase
+        List<Product> products = await BackendFetchAsync(navigate, []);
 
         //Save 1 - save product manufac, tradeId and productId info to local storage
         string serializedProducts = JsonSerializer.Serialize(products);
