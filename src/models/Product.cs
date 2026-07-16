@@ -18,9 +18,7 @@ public class Product
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public string ProductId { get; set; } = null!;
     public List<Prop> RawDescription { get; set; } = [];
-    [ForeignKey("Manufactrurer")]
     public string? TradeId { get; set; }
-    public int ManufactrurerId { get; set; } = 0;
     public int SkipCount { get; set; } = 0;         //how many times was product skipped
     public bool Skipped { get; set; } = false;      //was product skipped at any loop
     public bool Implemented { get; set; } = false;  //was product data saved back to backend ?
@@ -67,7 +65,7 @@ public class Product
         this.Skipped = true;
         this.Void = true;
         this.Implemented = false;
-        this.ManufactrurerId = 0;
+        this.Manufacturer= "";
         this.TradeId = null;
         return this;
     }

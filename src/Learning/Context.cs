@@ -28,7 +28,6 @@ public class JadeDbContext(Config _config) : DbContext
 
     readonly Config config = _config;
     public DbSet<Seen> Seen { get; set; }
-    public DbSet<Manufactrurer> Manufactrurers { get; set; }
     public DbSet<Product> Products { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -53,7 +52,5 @@ public class JadeDbContext(Config _config) : DbContext
         .Property(p => p.RawDescription)
         .HasConversion(converter, comparer).HasColumnName("Descryption");
         
-        modelBuilder.Entity<Manufactrurer>()
-        .HasIndex(m => m.Name).IsUnique();
     }
 }

@@ -44,7 +44,7 @@ public abstract class Manufacturer
         product.Skipped = false;
         product.Implemented = false;
         product.Void = false;
-        product.RawDescription = null;
+        product.RawDescription = [];
         if (!_areCookiesAdded)
         {
             foreach (var cookie in Cookies)
